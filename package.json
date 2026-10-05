@@ -1,6 +1,6 @@
 {
   "name": "homebridge-http-webhooks-plus",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "displayName": "Homebridge HTTP Webhooks Plus",
   "description": "HTTP webhooks and virtual accessories for Homebridge; independently maintained fork of homebridge-http-webhooks.",
   "license": "GPL-3.0",
@@ -25,7 +25,7 @@
     "url": "https://github.com/pponce/homebridge-http-webhooks-plus/issues"
   },
   "engines": {
-    "node": ">=9.11.2",
+    "node": ">=18",
     "homebridge": "^1.8.4||^2.0.0-beta"
   },
   "dependencies": {
@@ -43,14 +43,20 @@
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
-    "docs/COMPATIBILITY.md"
+    "docs/COMPATIBILITY.md",
+    "docs/STATE_API.md"
   ],
   "scripts": {
     "test": "node --test test/*.test.cjs",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "npm test && npm run test:hap",
+    "test:hap": "node --test test/hap.integration.cjs"
   },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@homebridge/hap-nodejs": "2.2.2",
+    "hap-nodejs": "0.12.3"
   }
 }

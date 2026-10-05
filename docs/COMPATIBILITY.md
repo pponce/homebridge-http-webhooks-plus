@@ -1,3 +1,18 @@
+# Compatibility for 0.3.0
+
+The garage/lock native [state API](STATE_API.md) is opt-in. Optimistic mode and
+legacy previous-value responses remain defaults. State/cache correctness fixes,
+strict validation, duplicate-ID rejection and rejection of incomplete Basic
+authentication are unconditional. Node 18+ is required. Garage/lock command
+requests now have finite response limits and do not follow redirects.
+
+Names, IDs, aliases, service types, characteristic UUIDs and existing Homebridge
+pairing/storage remain unchanged. The two state families import their legacy
+keys into atomic snapshots in a sibling cache directory; back up both as described
+in the API document. Review the deliberate downgrade implications there.
+Other accessory-family runtime files remain byte-identical to upstream 0.2.0.
+A source/package test cannot prove a particular Home's rooms or automations.
+
 # Migrating to HTTP Webhooks Plus 0.2.1
 
 This release republishes the upstream 0.2.0 implementation under the independent

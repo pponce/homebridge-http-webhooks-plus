@@ -1,3 +1,11 @@
+## Native garage and lock state (0.3.0)
+
+Configurable optimistic/external state, authenticated applied-state feedback,
+explicit notifications, safe startup choices and coherent persistent state are
+available for garages and locks. See [State API v1](docs/STATE_API.md) and
+[compatibility and upgrade notes](docs/COMPATIBILITY.md). These features are
+independent of any controller or hardware. Node 18+ is required.
+
 # homebridge-http-webhooks-plus
 
 Independent fork of [benzman81/homebridge-http-webhooks](https://github.com/benzman81/homebridge-http-webhooks), published as **homebridge-http-webhooks-plus**. The original GPL-3.0 license and attribution are retained.

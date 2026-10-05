@@ -8,9 +8,11 @@ const root = path.resolve(__dirname, '..');
 const baseline = require('./upstream-runtime.json');
 const pkg = require('../package.json');
 
-// The first Plus release deliberately changes packaging, not accessory behavior.
-// Replace these baseline gates with behavioral tests when a feature is introduced.
-test('0.2.1 retains every upstream runtime file and the complete config schema', () => {
+// Only the reviewed state families and shared routing changed in 0.3.0.
+const changed = new Set(['config.schema.json', 'src/Server.js', 'src/homekit/HttpWebHooksPlatform.js',
+  'src/homekit/accessories/HttpWebHookGarageDoorOpenerAccessory.js',
+  'src/homekit/accessories/HttpWebHookLockMechanismAccessory.js']);
+test('unaffected accessory families retain their exact upstream implementation', () => {
   const actual = [];
   function visit(folder) {
     for (const entry of fs.readdirSync(folder, {withFileTypes: true})) {
@@ -21,8 +23,9 @@ test('0.2.1 retains every upstream runtime file and the complete config schema',
   }
   visit(path.join(root, 'src'));
   actual.push('config.schema.json');
-  assert.deepEqual(actual.sort(), Object.keys(baseline.sha256).sort());
+  for (const file of Object.keys(baseline.sha256)) assert.ok(actual.includes(file), file);
   for (const [file, expected] of Object.entries(baseline.sha256)) {
+    if (changed.has(file)) continue;
     const digest = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex');
     assert.equal(digest, expected, file);
   }
@@ -71,13 +74,14 @@ test('all original registration aliases remain attached to the new package', () 
 
 test('package is independently publishable with unchanged runtime dependencies', () => {
   assert.equal(pkg.name, 'homebridge-http-webhooks-plus');
-  assert.equal(pkg.version, '0.2.1');
+  assert.equal(pkg.version, '0.3.0');
   assert.equal(pkg.license, 'GPL-3.0');
   assert.equal(pkg.author, 'benzman81');
   assert.deepEqual(pkg.dependencies, baseline.dependencies);
-  assert.deepEqual(pkg.engines, baseline.engines);
+  assert.equal(pkg.engines.node, '>=18');
+  assert.equal(pkg.engines.homebridge, baseline.engines.homebridge);
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
   assert.equal(pkg.publishConfig.access, 'public');
-  assert.deepEqual(pkg.files, ['index.js', 'src/', 'config.schema.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'docs/COMPATIBILITY.md']);
+  assert.deepEqual(pkg.files, ['index.js', 'src/', 'config.schema.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'docs/COMPATIBILITY.md', 'docs/STATE_API.md']);
   assert.match(pkg.repository.url, /pponce\/homebridge-http-webhooks-plus\.git$/);
 });

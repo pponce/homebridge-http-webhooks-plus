@@ -717,6 +717,66 @@
               "type": "string",
               "placeholder": "{\"Authorization\": \"Bearer ABCDEFGH\", \"Content-Type\": \"application/json\"}",
               "required": false
+            },
+            "state_mode": {
+              "title": "State source",
+              "type": "string",
+              "enum": [
+                "optimistic",
+                "external"
+              ],
+              "description": "Optimistic assumes accepted commands completed. External changes current state only on feedback. Omit to retain optimistic behavior (or the garage external_state alias)."
+            },
+            "startup_state_policy": {
+              "title": "Startup state",
+              "type": "string",
+              "enum": [
+                "await_feedback",
+                "use_cache"
+              ],
+              "description": "Omit for contextual defaults: external waits for fresh feedback; optimistic uses cache/defaults. Cached values are unverified."
+            },
+            "notification_policy": {
+              "title": "Explicit notifications",
+              "type": "string",
+              "enum": [
+                "changes_only",
+                "allow_explicit"
+              ],
+              "default": "changes_only",
+              "description": "Allow explicit lets a client reaffirm unchanged values. It never repeats commands."
+            },
+            "notification_min_interval_ms": {
+              "title": "Duplicate notification interval (ms)",
+              "type": "number",
+              "minimum": 100,
+              "maximum": 60000,
+              "default": 1000,
+              "condition": {
+                "functionBody": "return model.notification_policy === 'allow_explicit';"
+              },
+              "description": "Minimum interval per field for identical explicit events. Real changes always propagate."
+            },
+            "request_timeout_ms": {
+              "title": "Command deadline (ms)",
+              "type": "number",
+              "minimum": 100,
+              "maximum": 60000,
+              "default": 10000,
+              "description": "Total HTTP command deadline. Commands are never retried or redirected."
+            },
+            "response_max_bytes": {
+              "title": "Maximum command response bytes",
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 1048576,
+              "default": 65536,
+              "description": "Stop reading a larger response and report failure; do not retry."
+            },
+            "external_state": {
+              "title": "Legacy external-state alias",
+              "type": "boolean",
+              "description": "Migration alias for state_mode. If both are specified, they must agree."
             }
           }
         }
@@ -1022,6 +1082,61 @@
               "type": "string",
               "placeholder": "{\"Authorization\": \"Bearer ABCDEFGH\", \"Content-Type\": \"application/json\"}",
               "required": false
+            },
+            "state_mode": {
+              "title": "State source",
+              "type": "string",
+              "enum": [
+                "optimistic",
+                "external"
+              ],
+              "description": "Optimistic assumes accepted commands completed. External changes current state only on feedback. Omit to retain optimistic behavior (or the garage external_state alias)."
+            },
+            "startup_state_policy": {
+              "title": "Startup state",
+              "type": "string",
+              "enum": [
+                "await_feedback",
+                "use_cache"
+              ],
+              "description": "Omit for contextual defaults: external waits for fresh feedback; optimistic uses cache/defaults. Cached values are unverified."
+            },
+            "notification_policy": {
+              "title": "Explicit notifications",
+              "type": "string",
+              "enum": [
+                "changes_only",
+                "allow_explicit"
+              ],
+              "default": "changes_only",
+              "description": "Allow explicit lets a client reaffirm unchanged values. It never repeats commands."
+            },
+            "notification_min_interval_ms": {
+              "title": "Duplicate notification interval (ms)",
+              "type": "number",
+              "minimum": 100,
+              "maximum": 60000,
+              "default": 1000,
+              "condition": {
+                "functionBody": "return model.notification_policy === 'allow_explicit';"
+              },
+              "description": "Minimum interval per field for identical explicit events. Real changes always propagate."
+            },
+            "request_timeout_ms": {
+              "title": "Command deadline (ms)",
+              "type": "number",
+              "minimum": 100,
+              "maximum": 60000,
+              "default": 10000,
+              "description": "Total HTTP command deadline. Commands are never retried or redirected."
+            },
+            "response_max_bytes": {
+              "title": "Maximum command response bytes",
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 1048576,
+              "default": 65536,
+              "description": "Stop reading a larger response and report failure; do not retry."
             }
           }
         }
@@ -1296,7 +1411,12 @@
             "type": {
               "title": "Type",
               "type": "string",
-              "enum": ["generic valve","irrigation", "shower head", "water faucet"]
+              "enum": [
+                "generic valve",
+                "irrigation",
+                "shower head",
+                "water faucet"
+              ]
             },
             "rejectUnauthorized": {
               "title": "Reject Unauthorized SSL Certificate",
@@ -1354,6 +1474,25 @@
             }
           }
         }
+      },
+      "state_api_token": {
+        "title": "State API token",
+        "type": "string",
+        "minLength": 32,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9_-]+$",
+        "description": "Optional: enables the authenticated v1 garage/lock API. Generate a random token; clients send X-Webhooks-Token. Existing Basic authentication still applies.",
+        "format": "password"
+      },
+      "webhook_response_mode": {
+        "title": "Legacy webhook response format",
+        "type": "string",
+        "enum": [
+          "legacy",
+          "applied"
+        ],
+        "default": "legacy",
+        "description": "Legacy returns previous values. Applied returns typed resulting garage/lock state and notification outcomes. Other families are unchanged."
       }
     }
   },

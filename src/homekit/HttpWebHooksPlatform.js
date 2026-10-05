@@ -24,6 +24,7 @@ function HttpWebHooksPlatform(log, config, homebridge) {
   Characteristic = homebridge.hap.Characteristic;
 
   this.log = log;
+  this.hap = homebridge.hap;
   this.cacheDirectory = config["cache_directory"] || Constants.DEFAULT_CACHE_DIR;
   this.storage = require('node-persist');
   this.storage.initSync({
@@ -47,6 +48,7 @@ function HttpWebHooksPlatform(log, config, homebridge) {
   this.valves = config["valves"] || [];
 
   this.server = new Server(Service, Characteristic, this, config);
+  if (typeof homebridge.on === 'function') homebridge.on('shutdown', () => this.server.close());
 };
 
 HttpWebHooksPlatform.prototype.accessories = function(callback) {

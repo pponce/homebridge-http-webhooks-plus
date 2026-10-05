@@ -1,3 +1,12 @@
+## 0.3.0
+
+- Add generic garage/lock optimistic/external modes and garage external_state alias.
+- Add authenticated v1 applied-state/status API, explicit notification outcomes and duplicate-event limits.
+- Validate entire updates, including zero/false and mixed obstruction changes; preserve legacy responses by default.
+- Persist coherent atomic snapshots, import existing keys, guard late command completions and offer explicit startup policy.
+- Bound and redact new command/API handling, reject duplicate IDs and incomplete Basic auth; retain other accessory families.
+- Require Node 18+; preserve aliases, IDs, names and HAP service/characteristic identities.
+
 # 0.2.1 — HTTP Webhooks Plus
 
 - Publish the independent fork as `homebridge-http-webhooks-plus`.

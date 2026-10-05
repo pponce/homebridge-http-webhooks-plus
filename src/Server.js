@@ -1,10 +1,10 @@
 const Constants = require('./Constants');
 
-var request = require("request");
+const crypto = require('crypto');
+const {StateError, bodyObject, choice} = require('./StateContract');
 var http = require('http');
 var https = require('https');
 var url = require('url');
-var auth = require('http-auth');
 var fs = require('fs');
 var Service, Characteristic;
 
@@ -21,6 +21,14 @@ function Server(ServiceParam, CharacteristicParam, platform, platformConfig) {
   this.webhookEnableCORS = platformConfig["webhook_enable_cors"] || false;
   this.httpAuthUser = platformConfig["http_auth_user"] || null;
   this.httpAuthPass = platformConfig["http_auth_pass"] || null;
+  if ((this.httpAuthUser === null) !== (this.httpAuthPass === null) ||
+      (this.httpAuthUser !== null && (typeof this.httpAuthUser !== 'string' || typeof this.httpAuthPass !== 'string'))) {
+    throw new StateError('incomplete_or_invalid_basic_auth');
+  }
+  this.stateApiToken = platformConfig.state_api_token;
+  if (this.stateApiToken !== undefined && (typeof this.stateApiToken !== 'string' ||
+      !/^[A-Za-z0-9_-]{32,256}$/.test(this.stateApiToken))) throw new StateError('invalid_config_state_api_token');
+  this.platform.webhookResponseMode = choice(platformConfig.webhook_response_mode, 'legacy', ['legacy', 'applied'], 'webhook_response_mode');
   this.https = platformConfig["https"] === true;
   this.httpsKeyFile = platformConfig["https_keyfile"];
   this.httpsCertFile = platformConfig["https_certfile"];
@@ -28,6 +36,13 @@ function Server(ServiceParam, CharacteristicParam, platform, platformConfig) {
 
 Server.prototype.setAccessories = function(accessories) {
   this.accessories = accessories;
+  this.byId = new Map();
+  for (const accessory of accessories) {
+    const id = String(accessory.id);
+    if (accessory.id === undefined || accessory.id === null || !id || id.length > 128) throw new StateError('invalid_accessory_id');
+    if (this.byId.has(id)) throw new StateError('duplicate_accessory_id');
+    this.byId.set(id, accessory);
+  }
 };
 
 Server.prototype.createSSLCertificate = function() {
@@ -86,107 +101,93 @@ Server.prototype.getSSLServerOptions = function() {
   return sslServerOptions;
 };
 
+
+function equalSecret(a, b) {
+  return typeof a === 'string' && typeof b === 'string' &&
+    crypto.timingSafeEqual(crypto.createHash('sha256').update(a).digest(), crypto.createHash('sha256').update(b).digest());
+}
 Server.prototype.createServerCallback = function() {
-  return (function(request, response) {
-    if(this.webhookEnableCORS) {
-      // Based on https://gist.github.com/balupton/3696140
-      response.setHeader('Access-Control-Allow-Origin', '*');
-      response.setHeader('Access-Control-Request-Method', '*');
-      response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
-      response.setHeader('Access-Control-Allow-Headers', '*');
-      if (request.method === 'OPTIONS') {
-        response.writeHead(200);
-        response.end();
-        return;
+  return (request, response) => {
+    let ended = false, timer;
+    const finish = (status, value) => {
+      if (ended) return;
+      ended = true; clearTimeout(timer);
+      response.writeHead(status, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'});
+      response.end(JSON.stringify(value));
+    };
+    const failure = error => finish(error instanceof StateError ? error.status : 500,
+      {success: false, error: error instanceof StateError ? error.code : 'internal_error'});
+    response.on('error', () => { ended = true; clearTimeout(timer); });
+    response.on('close', () => { ended = true; clearTimeout(timer); });
+    request.on('error', () => { ended = true; clearTimeout(timer); });
+    request.on('aborted', () => { ended = true; clearTimeout(timer); });
+    try {
+      if (!request.url || request.url.length > 8192) throw new StateError('request_url_too_large', 414);
+      const parsed = url.parse(request.url, true);
+      if (this.webhookEnableCORS) {
+        response.setHeader('Access-Control-Allow-Origin', '*');
+        response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
+        response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Webhooks-Token');
+        if (request.method === 'OPTIONS') { finish(200, {success: true}); request.resume(); return; }
       }
-    }
-    var theUrl = request.url;
-    var theUrlParts = url.parse(theUrl, true);
-    var theUrlParams = theUrlParts.query;
-    var body = [];
-    request.on('error', (function(err) {
-      this.log("[ERROR Http WebHook Server] Reason: %s.", err);
-    }).bind(this)).on('data', function(chunk) {
-      body.push(chunk);
-    }).on('end', (function() {
-      body = Buffer.concat(body).toString();
-
-      response.on('error', function(err) {
-        this.log("[ERROR Http WebHook Server] Reason: %s.", err);
+      if (this.httpAuthUser !== null) {
+        const expected = 'Basic ' + Buffer.from(this.httpAuthUser + ':' + this.httpAuthPass).toString('base64');
+        if (!equalSecret(request.headers.authorization, expected)) {
+          response.setHeader('WWW-Authenticate', 'Basic realm="HttpWebHooks"');
+          throw new StateError('authentication_required', 401);
+        }
+      }
+      const isV1 = parsed.pathname.startsWith('/v1/');
+      let accessory, stateWrite = false;
+      if (isV1) {
+        if (!this.stateApiToken || !equalSecret(request.headers['x-webhooks-token'], this.stateApiToken)) throw new StateError('state_api_authentication_required', 401);
+        const route = /^\/v1\/accessories\/([^/]+)(\/state)?$/.exec(parsed.pathname);
+        if (!route || parsed.search) throw new StateError('invalid_state_route', 404);
+        let id;
+        try { id = decodeURIComponent(route[1]); } catch (_) { throw new StateError('invalid_accessory_id'); }
+        accessory = this.byId.get(id);
+        if (!accessory || typeof accessory.apply !== 'function') throw new StateError('state_accessory_not_found', 404);
+        stateWrite = Boolean(route[2]);
+        if (request.method !== (stateWrite ? 'POST' : 'GET')) throw new StateError('method_not_allowed', 405);
+        if (stateWrite && (request.headers['content-type'] || '').split(';')[0].trim().toLowerCase() !== 'application/json') throw new StateError('json_content_type_required', 415);
+      } else {
+        if (!['GET', 'POST'].includes(request.method)) throw new StateError('method_not_allowed', 405);
+        if (Object.values(parsed.query).some(Array.isArray)) throw new StateError('duplicate_query_field');
+        if (typeof parsed.query.accessoryId !== 'string' || !parsed.query.accessoryId) throw new StateError('accessory_not_found', 404);
+        accessory = this.byId.get(parsed.query.accessoryId);
+        if (!accessory) throw new StateError('accessory_not_found', 404);
+      }
+      let size = 0; const chunks = [], limit = isV1 ? 8192 : 65536;
+      timer = setTimeout(() => { response.setHeader('Connection', 'close'); finish(408, {success: false, error: 'request_timeout'}); request.resume(); }, 10000);
+      request.on('data', chunk => {
+        if (ended) return;
+        size += chunk.length;
+        if (size > limit) { response.setHeader('Connection', 'close'); finish(413, {success: false, error: 'request_body_too_large'}); return; }
+        if (isV1 && stateWrite) chunks.push(chunk);
       });
-
-      response.statusCode = 200;
-      response.setHeader('Content-Type', 'application/json');
-
-      if (!theUrlParams.accessoryId) {
-        response.statusCode = 404;
-        response.setHeader("Content-Type", "text/plain");
-        var errorText = "[ERROR Http WebHook Server] No accessoryId in request.";
-        this.log(errorText);
-        response.write(errorText);
-        response.end();
-      }
-      else {
-        var responseBody = null;
-        var accessoryId = theUrlParams.accessoryId;
-        var found = false;
-        for (var i = 0; i < this.accessories.length; i++) {
-          var accessory = this.accessories[i];
-          if (accessory.id === accessoryId) {
-            responseBody = accessory.changeFromServer(theUrlParams);
-            found = true;
-            break;
-          }
-        }
-        if(responseBody) {
-          response.write(JSON.stringify(responseBody));
-          response.end();
-        }
-        else {
-          response.statusCode = 404;
-          response.setHeader("Content-Type", "text/plain");
-          var errorText = "[ERROR Http WebHook Server] AccessoryId '"+theUrlParams.accessoryId+"' did not return a response body from 'changeFromServer'.";
-          if(!found) {
-            errorText = "[ERROR Http WebHook Server] AccessoryId '"+theUrlParams.accessoryId+"' not found.";
-          }
-          this.log(errorText);
-          response.write(errorText);
-          response.end();
-        }
-      }
-    }).bind(this));
-  }).bind(this);
+      request.on('end', () => {
+        if (ended) return;
+        try {
+          if (isV1) {
+            if (!stateWrite && size) throw new StateError('status_body_not_allowed');
+            const result = stateWrite ? accessory.apply(bodyObject(Buffer.concat(chunks).toString('utf8'))) : accessory.status();
+            finish(result.success ? 200 : 503, result);
+          } else finish(200, accessory.changeFromServer(parsed.query));
+        } catch (error) { failure(error); }
+      });
+    } catch (error) { failure(error); request.resume(); }
+  };
 };
 
 Server.prototype.start = function() {
-  var sslServerOptions = this.getSSLServerOptions();
-
-  var serverCallback = this.createServerCallback();
-
-  if (this.httpAuthUser && this.httpAuthPass) {
-    var httpAuthUser = this.httpAuthUser;
-    var httpAuthPass = this.httpAuthPass;
-    basicAuth = auth.basic({
-      realm : "Auth required"
-    }, function(username, password, callback) {
-      callback(username === httpAuthUser && password === httpAuthPass);
-    });
-    if(this.https) {
-      https.createServer(basicAuth, sslServerOptions, serverCallback).listen(this.webhookPort, this.webhookListenHost);
-    }
-    else {
-      http.createServer(basicAuth, serverCallback).listen(this.webhookPort, this.webhookListenHost);
-    }
-  }
-  else {
-    if(this.https) {
-      https.createServer(sslServerOptions, serverCallback).listen(this.webhookPort, this.webhookListenHost);
-    }
-    else {
-      http.createServer(serverCallback).listen(this.webhookPort, this.webhookListenHost);
-    }
-  }
-  this.log("Started server for webhooks on port '%s' listening for host '%s'.", this.webhookPort, this.webhookListenHost);
+  const callback = this.createServerCallback();
+  this.listener = this.https ? https.createServer(this.getSSLServerOptions(), callback) : http.createServer(callback);
+  this.listener.requestTimeout = 10000;
+  this.listener.headersTimeout = 10000;
+  this.listener.on('error', () => { this.log.error('HTTP Webhooks listener failed; check listener configuration.'); });
+  this.listener.listen(this.webhookPort, this.webhookListenHost);
 };
-
+Server.prototype.close = function() {
+  if (this.listener) { this.listener.close(); if (this.listener.closeAllConnections) this.listener.closeAllConnections(); }
+};
 module.exports = Server;

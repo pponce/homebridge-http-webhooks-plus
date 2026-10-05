@@ -10,14 +10,18 @@ permissions:
 jobs:
   compatibility:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node: [18, 22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: ${{ matrix.node }}
       - run: npm install --ignore-scripts --no-audit --no-fund
       - run: npm test
+      - run: npm run test:hap
       - name: Load all runtime dependencies without starting accessories
         run: node -e "if (typeof require('./index.js') !== 'function') process.exit(1)"
       - name: Inspect publishable package
