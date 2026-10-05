@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.2
 
 - Fix garage/lock settings layout: bind all per-device fields and collapsible groups to one array-item template so existing configured accessories appear together.
 - Remove the duplicate Webhook Settings heading and its unnecessary array wrapper.
