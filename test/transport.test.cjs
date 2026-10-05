@@ -1,6 +1,10 @@
 const test=require('node:test');const assert=require('node:assert/strict');const http=require('node:http');const {configure,send}=require('../src/CommandRequest');
 async function fixture(t,fn){const server=http.createServer(fn);await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>{server.closeAllConnections();server.close();});return 'http://127.0.0.1:'+server.address().port;}
 const command=o=>new Promise(resolve=>send(o,resolve));
+test('blank optional command fields retain legacy GET and empty-header defaults',()=>{
+ const options=configure({open_url:'',open_method:'',open_headers:'',open_body:'',open_form:''},'open');
+ assert.equal(options.method,'GET');assert.deepEqual(options.headers,{});assert.equal(options.url,undefined);
+});
 test('transport sends body/form and headers once and discards response content',async t=>{
  let calls=0;const url=await fixture(t,(req,res)=>{let data='';req.on('data',d=>data+=d);req.on('end',()=>{calls++;assert.equal(req.method,'POST');assert.equal(data,'key=a+b');assert.equal(req.headers.authorization,'SECRET');res.end('PRIVATE RESPONSE');});});
  const result=await command(configure({open_url:url,open_method:'POST',open_headers:'{"Authorization":"SECRET"}',open_form:'{"key":"a b"}'},'open'));assert.equal(result,null);assert.equal(calls,1);

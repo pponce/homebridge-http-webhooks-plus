@@ -23,9 +23,9 @@ function configure(config, direction) {
       if (!['http:', 'https:'].includes(url.protocol) || url.hash) throw new Error();
     }
   } catch (_) { throw new StateError('invalid_config_' + field('url')); }
-  const method = config[field('method')] === undefined ? 'GET' : config[field('method')];
+  const method = config[field('method')] === undefined || config[field('method')] === '' ? 'GET' : config[field('method')];
   if (typeof method !== 'string' || !/^[A-Z]{1,20}$/.test(method)) throw new StateError('invalid_config_' + field('method'));
-  const headers = object(config[field('headers')] === undefined ? '{}' : config[field('headers')], field('headers'));
+  const headers = object(config[field('headers')] === undefined || config[field('headers')] === '' ? '{}' : config[field('headers')], field('headers'));
   let body = config[field('body')] === undefined ? '' : config[field('body')];
   if (typeof body !== 'string') throw new StateError('invalid_config_' + field('body'));
   const form = config[field('form')];
