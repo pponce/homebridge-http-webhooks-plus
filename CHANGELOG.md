@@ -1,3 +1,8 @@
+## Unreleased
+
+- Fix garage/lock settings layout: bind all per-device fields and collapsible groups to one array-item template so existing configured accessories appear together.
+- Remove the duplicate Webhook Settings heading and its unnecessary array wrapper.
+
 ## 0.3.1
 
 - Expose garage/lock state, startup, notification and HTTP bounds in the explicit Homebridge settings form, grouped per accessory.

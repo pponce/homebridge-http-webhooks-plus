@@ -17,7 +17,7 @@ test('explicit Homebridge form exposes each native option once at the correct sc
   }
   for (const family of ['garagedooropeners', 'lockmechanisms']) {
     const entry = schema.layout[1].items.find(group => fields(group).includes(`${family}[].id`));
-    const groups = entry.items[0].items.filter(item => typeof item === 'object');
+    const groups = entry.items[0].items[0].items.filter(item => typeof item === 'object');
     for (const name of ['state_mode', 'startup_state_policy', 'notification_policy',
       'notification_min_interval_ms', 'request_timeout_ms', 'response_max_bytes']) {
       const path = `${family}[].${name}`;
@@ -28,6 +28,34 @@ test('explicit Homebridge form exposes each native option once at the correct sc
     assert.equal(paths.includes(`${family}[].state_api_token`), false);
   }
   assert.equal(paths.includes('garagedooropeners[].external_state'), false);
+});
+
+test('garage and lock array layouts bind one complete template to each configured device', () => {
+  for (const family of ['garagedooropeners', 'lockmechanisms']) {
+    const section = schema.layout[1].items.find(group => fields(group).includes(`${family}[].id`));
+    const array = section.items[0];
+    assert.equal(array.type, 'array');
+    assert.equal(array.key, family);
+    // ng-formworks treats unbound sibling sections inside an array as separate
+    // array items. All fields/groups must belong to one explicitly keyed item.
+    assert.equal(array.items.length, 1);
+    const item = array.items[0];
+    assert.equal(item.type, 'section');
+    assert.equal(item.key, `${family}[]`);
+    assert.ok(item.items.includes(`${family}[].id`));
+    assert.ok(item.items.includes(`${family}[].name`));
+    assert.deepEqual(item.items.filter(x => typeof x === 'object').map(x => x.title),
+      ['State and feedback', 'Notifications', 'Advanced HTTP settings']);
+    assert.ok(fields(item).every(path => path.startsWith(`${family}[].`)));
+  }
+});
+
+test('platform settings have one heading and no device-array wrapper', () => {
+  const settings = schema.layout[0];
+  assert.equal(settings.title, 'Webhook Settings');
+  assert.ok(settings.items.includes('webhook_port'));
+  assert.ok(settings.items.every(item => typeof item === 'string' ||
+    (item.type !== 'array' && item.title !== settings.title)));
 });
 
 test('all form field paths resolve and defaults preserve external-state compatibility', () => {

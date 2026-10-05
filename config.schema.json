@@ -1503,21 +1503,14 @@
       "expandable": true,
       "expanded": false,
       "items": [
-        {
-          "title": "Webhook Settings",
-          "type": "array",
-          "orderable": false,
-          "items": [
-            "webhook_port",
-            "webhook_listen_host",
-            "cache_directory",
-            "http_auth_user",
-            "http_auth_pass",
-            "https",
-            "https_keyfile",
-            "https_certfile"
-          ]
-        },
+        "webhook_port",
+        "webhook_listen_host",
+        "cache_directory",
+        "http_auth_user",
+        "http_auth_pass",
+        "https",
+        "https_keyfile",
+        "https_certfile",
         {
           "type": "section",
           "title": "Incoming state API",
@@ -1765,48 +1758,56 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "garagedooropeners[].id",
-                "garagedooropeners[].name",
                 {
                   "type": "section",
-                  "title": "State and feedback",
-                  "expandable": true,
-                  "expanded": true,
+                  "key": "garagedooropeners[]",
+                  "title": "Garage Door Opener",
                   "items": [
-                    "garagedooropeners[].state_mode",
-                    "garagedooropeners[].startup_state_policy"
+                    "garagedooropeners[].id",
+                    "garagedooropeners[].name",
+                    {
+                      "type": "section",
+                      "title": "State and feedback",
+                      "expandable": true,
+                      "expanded": true,
+                      "items": [
+                        "garagedooropeners[].state_mode",
+                        "garagedooropeners[].startup_state_policy"
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "title": "Notifications",
+                      "expandable": true,
+                      "expanded": true,
+                      "items": [
+                        "garagedooropeners[].notification_policy",
+                        "garagedooropeners[].notification_min_interval_ms"
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "title": "Advanced HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "garagedooropeners[].request_timeout_ms",
+                        "garagedooropeners[].response_max_bytes"
+                      ]
+                    },
+                    "garagedooropeners[].rejectUnauthorized",
+                    "garagedooropeners[].open_url",
+                    "garagedooropeners[].open_method",
+                    "garagedooropeners[].open_body",
+                    "garagedooropeners[].open_headers",
+                    "garagedooropeners[].close_url",
+                    "garagedooropeners[].close_method",
+                    "garagedooropeners[].close_body",
+                    "garagedooropeners[].close_headers"
                   ]
-                },
-                {
-                  "type": "section",
-                  "title": "Notifications",
-                  "expandable": true,
-                  "expanded": true,
-                  "items": [
-                    "garagedooropeners[].notification_policy",
-                    "garagedooropeners[].notification_min_interval_ms"
-                  ]
-                },
-                {
-                  "type": "section",
-                  "title": "Advanced HTTP settings",
-                  "expandable": true,
-                  "expanded": false,
-                  "items": [
-                    "garagedooropeners[].request_timeout_ms",
-                    "garagedooropeners[].response_max_bytes"
-                  ]
-                },
-                "garagedooropeners[].rejectUnauthorized",
-                "garagedooropeners[].open_url",
-                "garagedooropeners[].open_method",
-                "garagedooropeners[].open_body",
-                "garagedooropeners[].open_headers",
-                "garagedooropeners[].close_url",
-                "garagedooropeners[].close_method",
-                "garagedooropeners[].close_body",
-                "garagedooropeners[].close_headers"
-              ]
+                }
+              ],
+              "key": "garagedooropeners"
             }
           ]
         },
@@ -1906,48 +1907,56 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "lockmechanisms[].id",
-                "lockmechanisms[].name",
                 {
                   "type": "section",
-                  "title": "State and feedback",
-                  "expandable": true,
-                  "expanded": true,
+                  "key": "lockmechanisms[]",
+                  "title": "Lock Mechanism",
                   "items": [
-                    "lockmechanisms[].state_mode",
-                    "lockmechanisms[].startup_state_policy"
+                    "lockmechanisms[].id",
+                    "lockmechanisms[].name",
+                    {
+                      "type": "section",
+                      "title": "State and feedback",
+                      "expandable": true,
+                      "expanded": true,
+                      "items": [
+                        "lockmechanisms[].state_mode",
+                        "lockmechanisms[].startup_state_policy"
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "title": "Notifications",
+                      "expandable": true,
+                      "expanded": true,
+                      "items": [
+                        "lockmechanisms[].notification_policy",
+                        "lockmechanisms[].notification_min_interval_ms"
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "title": "Advanced HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "lockmechanisms[].request_timeout_ms",
+                        "lockmechanisms[].response_max_bytes"
+                      ]
+                    },
+                    "lockmechanisms[].rejectUnauthorized",
+                    "lockmechanisms[].open_url",
+                    "lockmechanisms[].open_method",
+                    "lockmechanisms[].open_body",
+                    "lockmechanisms[].open_headers",
+                    "lockmechanisms[].close_url",
+                    "lockmechanisms[].close_method",
+                    "lockmechanisms[].close_body",
+                    "lockmechanisms[].close_headers"
                   ]
-                },
-                {
-                  "type": "section",
-                  "title": "Notifications",
-                  "expandable": true,
-                  "expanded": true,
-                  "items": [
-                    "lockmechanisms[].notification_policy",
-                    "lockmechanisms[].notification_min_interval_ms"
-                  ]
-                },
-                {
-                  "type": "section",
-                  "title": "Advanced HTTP settings",
-                  "expandable": true,
-                  "expanded": false,
-                  "items": [
-                    "lockmechanisms[].request_timeout_ms",
-                    "lockmechanisms[].response_max_bytes"
-                  ]
-                },
-                "lockmechanisms[].rejectUnauthorized",
-                "lockmechanisms[].open_url",
-                "lockmechanisms[].open_method",
-                "lockmechanisms[].open_body",
-                "lockmechanisms[].open_headers",
-                "lockmechanisms[].close_url",
-                "lockmechanisms[].close_method",
-                "lockmechanisms[].close_body",
-                "lockmechanisms[].close_headers"
-              ]
+                }
+              ],
+              "key": "lockmechanisms"
             }
           ]
         },
