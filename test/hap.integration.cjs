@@ -51,3 +51,24 @@ for (const moduleName of variants) for (const Kind of [Garage, Lock]) {
   assert.equal(writes,0);
  });
 }
+for (const moduleName of variants) test(moduleName+' legacy families preserve services and command callback isolation', async t => {
+ const hap=require(moduleName), storage=new Map();
+ const platform={log:Object.assign(()=>{},{debug(){},info(){},warn(){},error(){}}),storage:{getItemSync:k=>storage.get(k),setItemSync:(k,v)=>storage.set(k,v)}};
+ const families=[['Sensor',{type:'contact'},'ContactSensor'],['Switch',{},'Switch'],['PushButton',{},'Switch'],
+  ['Doorbell',{},'Doorbell'],['LightBulb',{},'Lightbulb'],['Thermostat',{},'Thermostat'],['Outlet',{},'Outlet'],
+  ['Security',{},'SecuritySystem'],['StatelessSwitch',{buttons:[{name:'Button',id:'button'}]},'StatelessProgrammableSwitch'],
+  ['WindowCovering',{},'WindowCovering'],['Fanv2',{},'Fanv2'],['CarbonDioxideSensor',{},'CarbonDioxideSensor'],['Valve',{type:0},'Valve']];
+ for (const [name,config,service] of families) {
+  const Kind=require('../src/homekit/accessories/HttpWebHook'+name+'Accessory');
+  const a=new Kind(hap.Service,hap.Characteristic,platform,{id:'sample-'+name,name:'Sample '+name,...config});
+  const services=a.getServices();assert.ok(services.some(s=>s.UUID===hap.Service[service].UUID),name);
+  assert.equal(services.find(s=>s.UUID===hap.Service.AccessoryInformation.UUID).getCharacteristic(hap.Characteristic.Manufacturer).value,'HttpWebHooksPlatform');
+ }
+ for (const [name,method,char] of [['Switch','setState','On'],['LightBulb','setState','On'],['Outlet','setState','On']]) {
+  const Kind=require('../src/homekit/accessories/HttpWebHook'+name+'Accessory');
+  const a=new Kind(hap.Service,hap.Characteristic,platform,{id:name,name,on_url:'http://127.0.0.1:1'});
+  let calls=0;t.mock.method(Command,'send',(_o,cb)=>{calls++;cb(null);return ()=>{};});
+  await new Promise((resolve,reject)=>a[method](true,e=>e?reject(e):resolve()));assert.equal(calls,1);
+  await new Promise((resolve,reject)=>a[method](false,e=>e?reject(e):resolve(),require('../src/Constants').CONTEXT_FROM_WEBHOOK));assert.equal(calls,1);
+ }
+});

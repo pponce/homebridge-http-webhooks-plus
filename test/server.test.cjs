@@ -36,3 +36,12 @@ test('legacy response and Basic auth remain available; partial credentials rejec
 test('routing rejects duplicate IDs across families, including numeric/string aliases',async t=>{
  const {s}=await server(t);assert.throws(()=>s.setAccessories([{id:0},{id:'0'}]),/duplicate_accessory_id/);
 });
+test('configurable body limit, CORS and sanitized errors preserve legacy state',async t=>{
+ const {port,a}=await server(t,{webhook_body_max_bytes:1024,webhook_enable_cors:true});
+ const before=a.status();const result=await request(port,'/?accessoryId=sample&currentdoorstate=0','POST','X'.repeat(1025));
+ assert.equal(result.status,413);assert.deepEqual(a.status(),before);
+ assert.equal((await request(port,'/','OPTIONS')).status,200);
+ for(const config of [{webhook_port:'bad'},{webhook_timeout_ms:0},{https_keyfile:'/secret'},{http_auth_user:false},{https:'true'}]){
+  assert.throws(()=>new Server(null,null,a.platform,config),e=>!e.message.includes('/secret'));
+ }
+});

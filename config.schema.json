@@ -3,7 +3,7 @@
   "pluginType": "platform",
   "singular": true,
   "headerDisplay": "A `http` plugin with support of webhooks for homebridge.\n\nThe plugin gets its states from any system that is calling the url to trigger a state change.\n\nCurrently supports `contact`, `motion`, `occupancy`, `smoke`, `switches`, `push buttons`, `doorbells`, `lights` (only on/off and brightness), `temperature`, `humidity`, `thermostats`, `co2sensors`, and `leak` sensors.",
-  "footerDisplay": "Visit the Project [Readme](https://github.com/benzman81/homebridge-http-webhooks#readme) for more details.",
+  "footerDisplay": "See the [HTTP Webhooks Plus README](https://github.com/pponce/homebridge-http-webhooks-plus#readme).",
   "schema": {
     "type": "object",
     "properties": {
@@ -112,6 +112,19 @@
               "type": "integer",
               "placeholder": "7500",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
             }
           }
         }
@@ -189,6 +202,53 @@
               "type": "string",
               "placeholder": "{\"Authorization\": \"Bearer ABCDEFGH\", \"Content-Type\": \"application/json\"}",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "title": "Command deadline (ms)",
+              "default": 10000,
+              "minimum": 100,
+              "maximum": 60000,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "response_max_bytes": {
+              "type": "integer",
+              "title": "Maximum response bytes",
+              "default": 65536,
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "on_form": {
+              "type": "string",
+              "title": "On Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "off_form": {
+              "type": "string",
+              "title": "Off Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -242,6 +302,48 @@
               "type": "string",
               "placeholder": "{\"Authorization\": \"Bearer ABCDEFGH\", \"Content-Type\": \"application/json\"}",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "title": "Command deadline (ms)",
+              "default": 10000,
+              "minimum": 100,
+              "maximum": 60000,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "response_max_bytes": {
+              "type": "integer",
+              "title": "Maximum response bytes",
+              "default": 65536,
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "push_form": {
+              "type": "string",
+              "title": "Push Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -275,6 +377,19 @@
               "title": "Enable Long Press",
               "type": "boolean",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
             }
           }
         }
@@ -387,6 +502,58 @@
                   2.55
                 ]
               }
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "title": "Command deadline (ms)",
+              "default": 10000,
+              "minimum": 100,
+              "maximum": 60000,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "response_max_bytes": {
+              "type": "integer",
+              "title": "Maximum response bytes",
+              "default": 65536,
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "on_form": {
+              "type": "string",
+              "title": "On Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "off_form": {
+              "type": "string",
+              "title": "Off Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "brightness_form": {
+              "type": "string",
+              "title": "Brightness Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -415,6 +582,19 @@
               "title": "CO2 peak level",
               "type": "integer",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
             }
           }
         }
@@ -510,6 +690,53 @@
               "type": "string",
               "placeholder": "{\"Authorization\": \"Bearer ABCDEFGH\", \"Content-Type\": \"application/json\"}",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "title": "Command deadline (ms)",
+              "default": 10000,
+              "minimum": 100,
+              "maximum": 60000,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "response_max_bytes": {
+              "type": "integer",
+              "title": "Maximum response bytes",
+              "default": 65536,
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "set_target_temperature_form": {
+              "type": "string",
+              "title": "Set Target Temperature Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "set_target_heating_cooling_state_form": {
+              "type": "string",
+              "title": "Set Target Heating Cooling State Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -587,6 +814,53 @@
               "type": "string",
               "placeholder": "{\"Authorization\": \"Bearer ABCDEFGH\", \"Content-Type\": \"application/json\"}",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "title": "Command deadline (ms)",
+              "default": 10000,
+              "minimum": 100,
+              "maximum": 60000,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "response_max_bytes": {
+              "type": "integer",
+              "title": "Maximum response bytes",
+              "default": 65536,
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "on_form": {
+              "type": "string",
+              "title": "On Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "off_form": {
+              "type": "string",
+              "title": "Off Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -640,6 +914,48 @@
               "type": "string",
               "placeholder": "{\"Authorization\": \"Bearer ABCDEFGH\", \"Content-Type\": \"application/json\"}",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "title": "Command deadline (ms)",
+              "default": 10000,
+              "minimum": 100,
+              "maximum": 60000,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "response_max_bytes": {
+              "type": "integer",
+              "title": "Maximum response bytes",
+              "default": 65536,
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "set_state_form": {
+              "type": "string",
+              "title": "Set State Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -799,6 +1115,37 @@
               "minimum": 0,
               "maximum": 604800,
               "description": "Requires obstruction monitoring. 0 disables expiry after the first report. Only obstruction reports renew this timer; door-state heartbeats do not."
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "open_form": {
+              "type": "string",
+              "title": "Open Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "close_form": {
+              "type": "string",
+              "title": "Close Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -848,6 +1195,19 @@
                   }
                 }
               }
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
             }
           }
         }
@@ -1027,6 +1387,73 @@
               "type": "boolean",
               "placeholder": false,
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "title": "Command deadline (ms)",
+              "default": 10000,
+              "minimum": 100,
+              "maximum": 60000,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "response_max_bytes": {
+              "type": "integer",
+              "title": "Maximum response bytes",
+              "default": 65536,
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "open_form": {
+              "type": "string",
+              "title": "Open Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "open_80_form": {
+              "type": "string",
+              "title": "Open 80 Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "open_60_form": {
+              "type": "string",
+              "title": "Open 60 Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "open_40_form": {
+              "type": "string",
+              "title": "Open 40 Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "open_20_form": {
+              "type": "string",
+              "title": "Open 20 Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "close_form": {
+              "type": "string",
+              "title": "Close Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -1167,6 +1594,37 @@
               "minimum": 0,
               "maximum": 604800,
               "description": "0 disables expiry. Otherwise only a valid current-state report renews freshness. Commands and status reads do not. Choose longer than the reporting interval plus network delay. Works with legacy webhooks and v1."
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "open_form": {
+              "type": "string",
+              "title": "Open Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "close_form": {
+              "type": "string",
+              "title": "Close Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -1414,6 +1872,83 @@
               "type": "string",
               "placeholder": "{\"Authorization\": \"Bearer ABCDEFGH\", \"Content-Type\": \"application/json\"}",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "title": "Command deadline (ms)",
+              "default": 10000,
+              "minimum": 100,
+              "maximum": 60000,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "response_max_bytes": {
+              "type": "integer",
+              "title": "Maximum response bytes",
+              "default": 65536,
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "on_form": {
+              "type": "string",
+              "title": "On Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "off_form": {
+              "type": "string",
+              "title": "Off Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "speed_form": {
+              "type": "string",
+              "title": "Speed Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "lock_form": {
+              "type": "string",
+              "title": "Lock Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "unlock_form": {
+              "type": "string",
+              "title": "Unlock Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "target_state_form": {
+              "type": "string",
+              "title": "Target State Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "swing_mode_form": {
+              "type": "string",
+              "title": "Swing Mode Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "rotation_direction_form": {
+              "type": "string",
+              "title": "Rotation Direction Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -1501,6 +2036,53 @@
               "type": "string",
               "placeholder": "{\"Authorization\": \"Bearer ABCDEFGH\", \"Content-Type\": \"application/json\"}",
               "required": false
+            },
+            "log_level": {
+              "type": "string",
+              "title": "Log level",
+              "enum": [
+                "inherit",
+                "error",
+                "warn",
+                "info",
+                "debug"
+              ],
+              "default": "inherit",
+              "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "title": "Command deadline (ms)",
+              "default": 10000,
+              "minimum": 100,
+              "maximum": 60000,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "response_max_bytes": {
+              "type": "integer",
+              "title": "Maximum response bytes",
+              "default": 65536,
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "max_redirects": {
+              "type": "integer",
+              "title": "Maximum same-origin redirects",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Finite bound; commands are never automatically retried. Redirects default off and cannot change origin."
+            },
+            "on_form": {
+              "type": "string",
+              "title": "On Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "off_form": {
+              "type": "string",
+              "title": "Off Form",
+              "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
         }
@@ -1523,6 +2105,50 @@
         ],
         "default": "legacy",
         "description": "Default: legacy, for existing clients. Legacy returns previous values; applied returns typed resulting garage/lock state and notification outcomes. This choice does not affect v1 API responses or other accessory families."
+      },
+      "log_level": {
+        "type": "string",
+        "title": "Log level",
+        "enum": [
+          "inherit",
+          "error",
+          "warn",
+          "info",
+          "debug"
+        ],
+        "default": "inherit",
+        "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+      },
+      "extra_redaction_keys": {
+        "type": "array",
+        "title": "Additional redaction keys",
+        "maxItems": 32,
+        "items": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,64}$"
+        },
+        "description": "Optional custom secret field names. Mandatory credential redaction cannot be disabled."
+      },
+      "webhook_timeout_ms": {
+        "type": "integer",
+        "title": "Inbound request deadline (ms)",
+        "default": 10000,
+        "minimum": 1000,
+        "maximum": 60000
+      },
+      "webhook_body_max_bytes": {
+        "type": "integer",
+        "title": "Legacy request body limit (bytes)",
+        "default": 65536,
+        "minimum": 1024,
+        "maximum": 1048576
+      },
+      "state_api_body_max_bytes": {
+        "type": "integer",
+        "title": "State API body limit (bytes)",
+        "default": 8192,
+        "minimum": 1024,
+        "maximum": 65536
       }
     }
   },
@@ -1558,7 +2184,12 @@
           "items": [
             "webhook_response_mode"
           ]
-        }
+        },
+        "log_level",
+        "extra_redaction_keys",
+        "webhook_timeout_ms",
+        "webhook_body_max_bytes",
+        "state_api_body_max_bytes"
       ]
     },
     {
@@ -1578,12 +2209,28 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "sensors[].id",
-                "sensors[].name",
-                "sensors[].type",
-                "sensors[].autoRelease",
-                "sensors[].autoReleaseTime"
-              ]
+                {
+                  "type": "section",
+                  "key": "sensors[]",
+                  "items": [
+                    "sensors[].id",
+                    "sensors[].name",
+                    "sensors[].type",
+                    "sensors[].autoRelease",
+                    "sensors[].autoReleaseTime",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "sensors[].log_level"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "sensors"
             }
           ]
         },
@@ -1598,18 +2245,39 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "switches[].id",
-                "switches[].name",
-                "switches[].rejectUnauthorized",
-                "switches[].on_url",
-                "switches[].on_method",
-                "switches[].on_body",
-                "switches[].on_headers",
-                "switches[].off_url",
-                "switches[].off_method",
-                "switches[].off_body",
-                "switches[].off_headers"
-              ]
+                {
+                  "type": "section",
+                  "key": "switches[]",
+                  "items": [
+                    "switches[].id",
+                    "switches[].name",
+                    "switches[].rejectUnauthorized",
+                    "switches[].on_url",
+                    "switches[].on_method",
+                    "switches[].on_body",
+                    "switches[].on_headers",
+                    "switches[].off_url",
+                    "switches[].off_method",
+                    "switches[].off_body",
+                    "switches[].off_headers",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "switches[].log_level",
+                        "switches[].request_timeout_ms",
+                        "switches[].response_max_bytes",
+                        "switches[].max_redirects",
+                        "switches[].on_form",
+                        "switches[].off_form"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "switches"
             }
           ]
         },
@@ -1624,14 +2292,34 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "pushbuttons[].id",
-                "pushbuttons[].name",
-                "pushbuttons[].rejectUnauthorized",
-                "pushbuttons[].push_url",
-                "pushbuttons[].push_method",
-                "pushbuttons[].push_body",
-                "pushbuttons[].push_headers"
-              ]
+                {
+                  "type": "section",
+                  "key": "pushbuttons[]",
+                  "items": [
+                    "pushbuttons[].id",
+                    "pushbuttons[].name",
+                    "pushbuttons[].rejectUnauthorized",
+                    "pushbuttons[].push_url",
+                    "pushbuttons[].push_method",
+                    "pushbuttons[].push_body",
+                    "pushbuttons[].push_headers",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "pushbuttons[].log_level",
+                        "pushbuttons[].request_timeout_ms",
+                        "pushbuttons[].response_max_bytes",
+                        "pushbuttons[].max_redirects",
+                        "pushbuttons[].push_form"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "pushbuttons"
             }
           ]
         },
@@ -1646,11 +2334,27 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "doorbells[].id",
-                "doorbells[].name",
-                "doorbells[].double_press",
-                "doorbells[].long_press"
-              ]
+                {
+                  "type": "section",
+                  "key": "doorbells[]",
+                  "items": [
+                    "doorbells[].id",
+                    "doorbells[].name",
+                    "doorbells[].double_press",
+                    "doorbells[].long_press",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "doorbells[].log_level"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "doorbells"
             }
           ]
         },
@@ -1665,23 +2369,45 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "lights[].id",
-                "lights[].name",
-                "lights[].rejectUnauthorized",
-                "lights[].on_url",
-                "lights[].on_method",
-                "lights[].on_body",
-                "lights[].on_headers",
-                "lights[].off_url",
-                "lights[].off_method",
-                "lights[].off_body",
-                "lights[].off_headers",
-                "lights[].brightness_url",
-                "lights[].brightness_method",
-                "lights[].brightness_body",
-                "lights[].brightness_headers",
-                "lights[].brightness_factor"
-              ]
+                {
+                  "type": "section",
+                  "key": "lights[]",
+                  "items": [
+                    "lights[].id",
+                    "lights[].name",
+                    "lights[].rejectUnauthorized",
+                    "lights[].on_url",
+                    "lights[].on_method",
+                    "lights[].on_body",
+                    "lights[].on_headers",
+                    "lights[].off_url",
+                    "lights[].off_method",
+                    "lights[].off_body",
+                    "lights[].off_headers",
+                    "lights[].brightness_url",
+                    "lights[].brightness_method",
+                    "lights[].brightness_body",
+                    "lights[].brightness_headers",
+                    "lights[].brightness_factor",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "lights[].log_level",
+                        "lights[].request_timeout_ms",
+                        "lights[].response_max_bytes",
+                        "lights[].max_redirects",
+                        "lights[].on_form",
+                        "lights[].off_form",
+                        "lights[].brightness_form"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "lights"
             }
           ]
         },
@@ -1696,10 +2422,26 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "co2sensors[].id",
-                "co2sensors[].name",
-                "co2sensors[].co2_peak_level"
-              ]
+                {
+                  "type": "section",
+                  "key": "co2sensors[]",
+                  "items": [
+                    "co2sensors[].id",
+                    "co2sensors[].name",
+                    "co2sensors[].co2_peak_level",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "co2sensors[].log_level"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "co2sensors"
             }
           ]
         },
@@ -1714,18 +2456,39 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "thermostats[].id",
-                "thermostats[].name",
-                "thermostats[].rejectUnauthorized",
-                "thermostats[].set_target_temperature_url",
-                "thermostats[].set_target_temperature_method",
-                "thermostats[].set_target_temperature_body",
-                "thermostats[].set_target_temperature_headers",
-                "thermostats[].set_target_heating_cooling_state_url",
-                "thermostats[].set_target_heating_cooling_state_method",
-                "thermostats[].set_target_heating_cooling_state_body",
-                "thermostats[].set_target_heating_cooling_state_headers"
-              ]
+                {
+                  "type": "section",
+                  "key": "thermostats[]",
+                  "items": [
+                    "thermostats[].id",
+                    "thermostats[].name",
+                    "thermostats[].rejectUnauthorized",
+                    "thermostats[].set_target_temperature_url",
+                    "thermostats[].set_target_temperature_method",
+                    "thermostats[].set_target_temperature_body",
+                    "thermostats[].set_target_temperature_headers",
+                    "thermostats[].set_target_heating_cooling_state_url",
+                    "thermostats[].set_target_heating_cooling_state_method",
+                    "thermostats[].set_target_heating_cooling_state_body",
+                    "thermostats[].set_target_heating_cooling_state_headers",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "thermostats[].log_level",
+                        "thermostats[].request_timeout_ms",
+                        "thermostats[].response_max_bytes",
+                        "thermostats[].max_redirects",
+                        "thermostats[].set_target_temperature_form",
+                        "thermostats[].set_target_heating_cooling_state_form"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "thermostats"
             }
           ]
         },
@@ -1740,18 +2503,39 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "outlets[].id",
-                "outlets[].name",
-                "outlets[].rejectUnauthorized",
-                "outlets[].on_url",
-                "outlets[].on_method",
-                "outlets[].on_body",
-                "outlets[].on_headers",
-                "outlets[].off_url",
-                "outlets[].off_method",
-                "outlets[].off_body",
-                "outlets[].off_headers"
-              ]
+                {
+                  "type": "section",
+                  "key": "outlets[]",
+                  "items": [
+                    "outlets[].id",
+                    "outlets[].name",
+                    "outlets[].rejectUnauthorized",
+                    "outlets[].on_url",
+                    "outlets[].on_method",
+                    "outlets[].on_body",
+                    "outlets[].on_headers",
+                    "outlets[].off_url",
+                    "outlets[].off_method",
+                    "outlets[].off_body",
+                    "outlets[].off_headers",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "outlets[].log_level",
+                        "outlets[].request_timeout_ms",
+                        "outlets[].response_max_bytes",
+                        "outlets[].max_redirects",
+                        "outlets[].on_form",
+                        "outlets[].off_form"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "outlets"
             }
           ]
         },
@@ -1766,14 +2550,34 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "security[].id",
-                "security[].name",
-                "security[].rejectUnauthorized",
-                "security[].set_state_url",
-                "security[].set_state_method",
-                "security[].set_state_body",
-                "security[].set_state_headers"
-              ]
+                {
+                  "type": "section",
+                  "key": "security[]",
+                  "items": [
+                    "security[].id",
+                    "security[].name",
+                    "security[].rejectUnauthorized",
+                    "security[].set_state_url",
+                    "security[].set_state_method",
+                    "security[].set_state_body",
+                    "security[].set_state_headers",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "security[].log_level",
+                        "security[].request_timeout_ms",
+                        "security[].response_max_bytes",
+                        "security[].max_redirects",
+                        "security[].set_state_form"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "security"
             }
           ]
         },
@@ -1833,7 +2637,11 @@
                       "expanded": false,
                       "items": [
                         "garagedooropeners[].request_timeout_ms",
-                        "garagedooropeners[].response_max_bytes"
+                        "garagedooropeners[].response_max_bytes",
+                        "garagedooropeners[].log_level",
+                        "garagedooropeners[].max_redirects",
+                        "garagedooropeners[].open_form",
+                        "garagedooropeners[].close_form"
                       ]
                     },
                     "garagedooropeners[].rejectUnauthorized",
@@ -1888,10 +2696,21 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "statelessswitches[].log_level"
+                      ]
                     }
-                  ]
+                  ],
+                  "key": "statelessswitches[]"
                 }
-              ]
+              ],
+              "key": "statelessswitches"
             }
           ]
         },
@@ -1906,34 +2725,59 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "windowcoverings[].id",
-                "windowcoverings[].name",
-                "windowcoverings[].rejectUnauthorized",
-                "windowcoverings[].open_url",
-                "windowcoverings[].open_method",
-                "windowcoverings[].open_body",
-                "windowcoverings[].open_headers",
-                "windowcoverings[].open_80_url",
-                "windowcoverings[].open_80_method",
-                "windowcoverings[].open_80_body",
-                "windowcoverings[].open_80_headers",
-                "windowcoverings[].open_60_url",
-                "windowcoverings[].open_60_method",
-                "windowcoverings[].open_60_body",
-                "windowcoverings[].open_60_headers",
-                "windowcoverings[].open_40_url",
-                "windowcoverings[].open_40_method",
-                "windowcoverings[].open_40_body",
-                "windowcoverings[].open_40_headers",
-                "windowcoverings[].open_20_url",
-                "windowcoverings[].open_20_method",
-                "windowcoverings[].open_20_body",
-                "windowcoverings[].open_20_headers",
-                "windowcoverings[].close_url",
-                "windowcoverings[].close_method",
-                "windowcoverings[].close_body",
-                "windowcoverings[].close_headers"
-              ]
+                {
+                  "type": "section",
+                  "key": "windowcoverings[]",
+                  "items": [
+                    "windowcoverings[].id",
+                    "windowcoverings[].name",
+                    "windowcoverings[].rejectUnauthorized",
+                    "windowcoverings[].open_url",
+                    "windowcoverings[].open_method",
+                    "windowcoverings[].open_body",
+                    "windowcoverings[].open_headers",
+                    "windowcoverings[].open_80_url",
+                    "windowcoverings[].open_80_method",
+                    "windowcoverings[].open_80_body",
+                    "windowcoverings[].open_80_headers",
+                    "windowcoverings[].open_60_url",
+                    "windowcoverings[].open_60_method",
+                    "windowcoverings[].open_60_body",
+                    "windowcoverings[].open_60_headers",
+                    "windowcoverings[].open_40_url",
+                    "windowcoverings[].open_40_method",
+                    "windowcoverings[].open_40_body",
+                    "windowcoverings[].open_40_headers",
+                    "windowcoverings[].open_20_url",
+                    "windowcoverings[].open_20_method",
+                    "windowcoverings[].open_20_body",
+                    "windowcoverings[].open_20_headers",
+                    "windowcoverings[].close_url",
+                    "windowcoverings[].close_method",
+                    "windowcoverings[].close_body",
+                    "windowcoverings[].close_headers",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "windowcoverings[].log_level",
+                        "windowcoverings[].request_timeout_ms",
+                        "windowcoverings[].response_max_bytes",
+                        "windowcoverings[].max_redirects",
+                        "windowcoverings[].open_form",
+                        "windowcoverings[].open_80_form",
+                        "windowcoverings[].open_60_form",
+                        "windowcoverings[].open_40_form",
+                        "windowcoverings[].open_20_form",
+                        "windowcoverings[].close_form"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "windowcoverings"
             }
           ]
         },
@@ -1983,7 +2827,11 @@
                       "expanded": false,
                       "items": [
                         "lockmechanisms[].request_timeout_ms",
-                        "lockmechanisms[].response_max_bytes"
+                        "lockmechanisms[].response_max_bytes",
+                        "lockmechanisms[].log_level",
+                        "lockmechanisms[].max_redirects",
+                        "lockmechanisms[].open_form",
+                        "lockmechanisms[].close_form"
                       ]
                     },
                     "lockmechanisms[].rejectUnauthorized",
@@ -2013,46 +2861,73 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "fanv2s[].id",
-                "fanv2s[].name",
-                "fanv2s[].rejectUnauthorized",
-                "fanv2s[].on_url",
-                "fanv2s[].on_method",
-                "fanv2s[].on_body",
-                "fanv2s[].on_headers",
-                "fanv2s[].off_url",
-                "fanv2s[].off_method",
-                "fanv2s[].off_body",
-                "fanv2s[].off_headers",
-                "fanv2s[].speed_url",
-                "fanv2s[].speed_method",
-                "fanv2s[].speed_body",
-                "fanv2s[].speed_headers",
-                "fanv2s[].speed_factor",
-                "fanv2s[].enableLockPhysicalControls",
-                "fanv2s[].lock_url",
-                "fanv2s[].lock_method",
-                "fanv2s[].lock_body",
-                "fanv2s[].lock_headers",
-                "fanv2s[].unlock_url",
-                "fanv2s[].unlock_method",
-                "fanv2s[].unlock_body",
-                "fanv2s[].unlock_headers",
-                "fanv2s[].enableTargetStateControls",
-                "fanv2s[].target_state_url",
-                "fanv2s[].target_state_method",
-                "fanv2s[].target_state_body",
-                "fanv2s[].target_state_headers",
-                "fanv2s[].enableSwingModeControls",
-                "fanv2s[].swing_mode_url",
-                "fanv2s[].swing_mode_method",
-                "fanv2s[].swing_mode_body",
-                "fanv2s[].swing_mode_headers",
-                "fanv2s[].rotation_direction_url",
-                "fanv2s[].rotation_direction_method",
-                "fanv2s[].rotation_direction_body",
-                "fanv2s[].rotation_direction_headers"
-              ]
+                {
+                  "type": "section",
+                  "key": "fanv2s[]",
+                  "items": [
+                    "fanv2s[].id",
+                    "fanv2s[].name",
+                    "fanv2s[].rejectUnauthorized",
+                    "fanv2s[].on_url",
+                    "fanv2s[].on_method",
+                    "fanv2s[].on_body",
+                    "fanv2s[].on_headers",
+                    "fanv2s[].off_url",
+                    "fanv2s[].off_method",
+                    "fanv2s[].off_body",
+                    "fanv2s[].off_headers",
+                    "fanv2s[].speed_url",
+                    "fanv2s[].speed_method",
+                    "fanv2s[].speed_body",
+                    "fanv2s[].speed_headers",
+                    "fanv2s[].speed_factor",
+                    "fanv2s[].enableLockPhysicalControls",
+                    "fanv2s[].lock_url",
+                    "fanv2s[].lock_method",
+                    "fanv2s[].lock_body",
+                    "fanv2s[].lock_headers",
+                    "fanv2s[].unlock_url",
+                    "fanv2s[].unlock_method",
+                    "fanv2s[].unlock_body",
+                    "fanv2s[].unlock_headers",
+                    "fanv2s[].enableTargetStateControls",
+                    "fanv2s[].target_state_url",
+                    "fanv2s[].target_state_method",
+                    "fanv2s[].target_state_body",
+                    "fanv2s[].target_state_headers",
+                    "fanv2s[].enableSwingModeControls",
+                    "fanv2s[].swing_mode_url",
+                    "fanv2s[].swing_mode_method",
+                    "fanv2s[].swing_mode_body",
+                    "fanv2s[].swing_mode_headers",
+                    "fanv2s[].rotation_direction_url",
+                    "fanv2s[].rotation_direction_method",
+                    "fanv2s[].rotation_direction_body",
+                    "fanv2s[].rotation_direction_headers",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "fanv2s[].log_level",
+                        "fanv2s[].request_timeout_ms",
+                        "fanv2s[].response_max_bytes",
+                        "fanv2s[].max_redirects",
+                        "fanv2s[].on_form",
+                        "fanv2s[].off_form",
+                        "fanv2s[].speed_form",
+                        "fanv2s[].lock_form",
+                        "fanv2s[].unlock_form",
+                        "fanv2s[].target_state_form",
+                        "fanv2s[].swing_mode_form",
+                        "fanv2s[].rotation_direction_form"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "fanv2s"
             }
           ]
         },
@@ -2067,19 +2942,40 @@
               "type": "array",
               "orderable": false,
               "items": [
-                "valves[].id",
-                "valves[].name",
-                "valves[].type",
-                "valves[].rejectUnauthorized",
-                "valves[].on_url",
-                "valves[].on_method",
-                "valves[].on_body",
-                "valves[].on_headers",
-                "valves[].off_url",
-                "valves[].off_method",
-                "valves[].off_body",
-                "valves[].off_headers"
-              ]
+                {
+                  "type": "section",
+                  "key": "valves[]",
+                  "items": [
+                    "valves[].id",
+                    "valves[].name",
+                    "valves[].type",
+                    "valves[].rejectUnauthorized",
+                    "valves[].on_url",
+                    "valves[].on_method",
+                    "valves[].on_body",
+                    "valves[].on_headers",
+                    "valves[].off_url",
+                    "valves[].off_method",
+                    "valves[].off_body",
+                    "valves[].off_headers",
+                    {
+                      "type": "section",
+                      "title": "Logging and HTTP settings",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "valves[].log_level",
+                        "valves[].request_timeout_ms",
+                        "valves[].response_max_bytes",
+                        "valves[].max_redirects",
+                        "valves[].on_form",
+                        "valves[].off_form"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "key": "valves"
             }
           ]
         }

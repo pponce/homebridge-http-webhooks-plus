@@ -6,7 +6,7 @@ function HttpWebHookValveAccessory(ServiceParam, CharacteristicParam, platform, 
     Characteristic = CharacteristicParam;
 
     this.platform = platform;
-    this.log = platform.log;
+    this.log = Util.accessoryLog(platform, valveConfig);
     this.storage = platform.storage;
 
     this.id = valveConfig["id"];
@@ -76,10 +76,10 @@ HttpWebHookValveAccessory.prototype.changeFromServer = function(urlParams) {
             var state = urlParams.state;
             var stateNumber = state === "true" ? 1 : 0;
             this.storage.setItemSync("http-webhook-" + this.id, stateNumber);
-            this.log.info("Change HomeKit value for " + this.type + " state to '%s'.", stateNumber);
+            this.log.info('Accessory state event.');
 
             if (cachedState !== stateNumber) {
-                this.log(this.name + ": Change HomeKit state for valve to '%s'.", stateNumber);
+                this.log('Accessory state event.');
                 this.service.getCharacteristic(Characteristic.Active).updateValue(stateNumber, undefined, Constants.CONTEXT_FROM_WEBHOOK);
                 this.service.getCharacteristic(Characteristic.InUse).updateValue(stateNumber, undefined, Constants.CONTEXT_FROM_WEBHOOK);
             }
@@ -88,10 +88,10 @@ HttpWebHookValveAccessory.prototype.changeFromServer = function(urlParams) {
             var statusFault = urlParams.statusFault;
             var statusFaultNumber = statusFault === "true" ? 1 : 0;
             this.storage.setItemSync("http-webhook-" + this.id + "-statusFault", statusFaultNumber);
-            this.log.info("Change HomeKit value for " + this.type + " statusFault to '%s'.", statusFaultNumber);
+            this.log.info('Accessory state event.');
 
             if (cachedStatusFault !== statusFaultNumber) {
-                this.log(this.name + ": Change HomeKit statusFault for valve to '%s'.", statusFault);
+                this.log('Accessory state event.');
                 this.service.getCharacteristic(Characteristic.StatusFault).updateValue(statusFaultNumber, undefined, Constants.CONTEXT_FROM_WEBHOOK);
             }
         }
@@ -102,7 +102,7 @@ HttpWebHookValveAccessory.prototype.changeFromServer = function(urlParams) {
 };
 
 HttpWebHookValveAccessory.prototype.getState = function(callback) {
-    this.log.debug(this.name + ": Getting current state for", this.id);
+    this.log.debug('Accessory state read or feedback received.');
     var state = this.storage.getItemSync("http-webhook-" + this.id);
     if (state === undefined) {
         state = 0;
@@ -112,7 +112,7 @@ HttpWebHookValveAccessory.prototype.getState = function(callback) {
 };
 
 HttpWebHookValveAccessory.prototype.getStatusFault = function(callback) {
-    this.log.debug(this.name + ": Getting status fault for", this.id);
+    this.log.debug('Accessory state read or feedback received.');
     var statusFault = this.storage.getItemSync("http-webhook-" + this.id + "-statusFault");
     if (statusFault === undefined) {
         statusFault = 0;
@@ -122,7 +122,7 @@ HttpWebHookValveAccessory.prototype.getStatusFault = function(callback) {
 };
 
 HttpWebHookValveAccessory.prototype.setState = function(active, callback, context) {
-    this.log.info("Set valve state for", this.id, "to", active);
+    this.log.info('Accessory state event.');
     this.storage.setItemSync("http-webhook-" + this.id, active);
 
     this.service.getCharacteristic(Characteristic.Active).updateValue(active, undefined, Constants.CONTEXT_FROM_WEBHOOK);

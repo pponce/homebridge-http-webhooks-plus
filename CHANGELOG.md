@@ -1,3 +1,15 @@
+## 0.5.0
+
+- Shared bounded core HTTP/HTTPS transport across command accessory families;
+  remove deprecated request and unused http-auth dependencies. No retries;
+  configurable same-origin redirects, deadlines and aggregate response limits.
+- Platform/accessory logging inheritance and mandatory redaction; remove raw
+  request/response dumps, with additional custom redaction keys.
+- Configurable inbound bounds, listener cleanup and early configuration errors;
+  expose HTTP/logging/form controls in bound per-device UI items.
+- Preserve legacy state semantics and identities; document Home display refresh
+  limitations for feedback expiry and recovery.
+
 ## 0.4.0
 
 - Add opt-in per-accessory current-state feedback expiry for garages and locks, with monotonic deadlines and communication-error recovery.

@@ -6,7 +6,7 @@ function HttpWebHookWindowCoveringAccessory(ServiceParam, CharacteristicParam, p
   Characteristic = CharacteristicParam;
 
   this.platform = platform;
-  this.log = platform.log;
+  this.log = Util.accessoryLog(platform, windowcoveringConfig);
   this.storage = platform.storage;
 
   this.id = windowcoveringConfig["id"];
@@ -64,7 +64,7 @@ HttpWebHookWindowCoveringAccessory.prototype.changeFromServer = function(urlPara
     }
     this.storage.setItemSync("http-webhook-current-position-" + this.id, urlParams.currentposition);
     if (cachedCurrentPosition !== urlParams.currentposition) {
-      this.log(this.name + ": Change Current Window Covering for covers to '%s'.", urlParams.currentposition);
+      this.log('Accessory state event.');
       this.service.getCharacteristic(Characteristic.CurrentPosition).updateValue(urlParams.currentposition, undefined, Constants.CONTEXT_FROM_WEBHOOK);
     }
   }
@@ -77,7 +77,7 @@ HttpWebHookWindowCoveringAccessory.prototype.changeFromServer = function(urlPara
     this.storage.setItemSync("http-webhook-target-position-" + this.id, urlParams.targetposition);
     if (cachedTargetPosition !== urlParams.targetposition) {
       if (urlParams.targetposition) {
-        this.log(this.name + ": Change Target Position for covers to '%s'.", urlParams.targetposition);
+        this.log('Accessory state event.');
         this.service.getCharacteristic(Characteristic.TargetPosition).updateValue(urlParams.targetposition, undefined, Constants.CONTEXT_FROM_WEBHOOK);
       }
     }
@@ -90,7 +90,7 @@ HttpWebHookWindowCoveringAccessory.prototype.changeFromServer = function(urlPara
     this.storage.setItemSync("http-webhook-position-state-" + this.id, urlParams.positionstate);
     if (cachedPositionState !== urlParams.positionstate) {
       if (urlParams.positionstate) {
-        this.log(this.name + ": Change Position State for covers to '%s'.", urlParams.positionstate);
+        this.log('Accessory state event.');
         this.service.getCharacteristic(Characteristic.PositionState).updateValue(urlParams.positionstate, undefined, Constants.CONTEXT_FROM_WEBHOOK);
       }
     }
@@ -104,7 +104,7 @@ HttpWebHookWindowCoveringAccessory.prototype.changeFromServer = function(urlPara
 }
 
 HttpWebHookWindowCoveringAccessory.prototype.getTargetPosition = function(callback) {
-  this.log.debug(this.name + ": Getting current Target Position for '%s'...", this.id);
+  this.log.debug('Accessory state read or feedback received.');
   var state = this.storage.getItemSync("http-webhook-target-position-" + this.id);
   if (state === undefined) {
     state = 100;
@@ -113,8 +113,8 @@ HttpWebHookWindowCoveringAccessory.prototype.getTargetPosition = function(callba
 };
 
 HttpWebHookWindowCoveringAccessory.prototype.setTargetPosition = function(newState, callback, context) {
-  this.log(this.name + ": Target Position State for '%s'...", this.id);
-  this.log(this.name + ": New target state is: " + newState);
+  this.log('Accessory state event.');
+  this.log('Accessory state event.');
   this.storage.setItemSync("http-webhook-target-position-" + this.id, newState);
   if(this.autoSetCurrentPosition) {
     this.storage.setItemSync("http-webhook-current-position-" + this.id, newState);
@@ -170,7 +170,7 @@ HttpWebHookWindowCoveringAccessory.prototype.setTargetPosition = function(newSta
   Util.callHttpApi(this.log, urlToCall, urlMethod, urlBody, urlForm, urlHeaders, this.rejectUnauthorized, callback, context, (function() {
     this.service.getCharacteristic(Characteristic.TargetPosition).updateValue(newState, undefined, null);
     if(this.autoSetCurrentPosition) {
-      this.log(this.name + ": New current state is: " + newState);
+      this.log('Accessory state event.');
       setTimeout(function() {
         this.service.getCharacteristic(Characteristic.CurrentPosition).updateValue(newState, undefined, null);
       }.bind(this), 1000);
@@ -179,7 +179,7 @@ HttpWebHookWindowCoveringAccessory.prototype.setTargetPosition = function(newSta
 };
 
 HttpWebHookWindowCoveringAccessory.prototype.getCurrentPosition = function(callback) {
-  this.log.debug(this.name + ": Getting Current Position for '%s'...", this.id);
+  this.log.debug('Accessory state read or feedback received.');
   var state = this.storage.getItemSync("http-webhook-current-position-" + this.id);
   if (state === undefined) {
     state = 100;
@@ -188,7 +188,7 @@ HttpWebHookWindowCoveringAccessory.prototype.getCurrentPosition = function(callb
 };
 
 HttpWebHookWindowCoveringAccessory.prototype.getPositionState = function(callback) {
-  this.log.debug(this.name + ": Getting position state for '%s'...", this.id);
+  this.log.debug('Accessory state read or feedback received.');
   var state = this.storage.getItemSync("http-webhook-position-state-" + this.id);
   if (state === undefined) {
     state = Characteristic.PositionState.STOPPED;

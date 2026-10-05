@@ -1,3 +1,4 @@
+const Util = require('../../Util');
 const Constants = require('../../Constants');
 
 function HttpWebHookSensorAccessory(ServiceParam, CharacteristicParam, platform, sensorConfig) {
@@ -5,7 +6,7 @@ function HttpWebHookSensorAccessory(ServiceParam, CharacteristicParam, platform,
   Characteristic = CharacteristicParam;
 
   this.platform = platform;
-  this.log = platform.log;
+  this.log = Util.accessoryLog(platform, sensorConfig);
   this.storage = platform.storage;
 
   this.id = sensorConfig["id"];
@@ -68,19 +69,19 @@ HttpWebHookSensorAccessory.prototype.changeFromServer = function(urlParams) {
   }
   var noUrlValue = isNumberBased ? urlParams.value === undefined : urlParams.state === undefined;
   if (noUrlValue) {
-    this.log.debug(this.name + ": No urlValue");
+    this.log.debug('Accessory state read or feedback received.');
     return {
       "success" : true,
       "state" : cached
     };
   }
   var urlValue = isNumberBased ? urlParams.value : urlParams.state === "true";
-  this.log.debug(this.name + ": urlValue: "+ urlValue);
+  this.log.debug('Accessory state read or feedback received.');
   this.storage.setItemSync("http-webhook-" + this.id, urlValue);
-  this.log.debug(this.name + ": cached: "+ cached);
-  this.log.debug(this.name + ": cached !== urlValue: "+ (cached !== urlValue));
+  this.log.debug('Accessory state read or feedback received.');
+  this.log.debug('Accessory state read or feedback received.');
   if (cached !== urlValue) {
-    this.log(this.name + ": Change HomeKit value for " + this.type + " sensor to '%s'.", urlValue);
+    this.log('Accessory state event.');
 
     if (this.type === "contact") {
       this.service.getCharacteristic(Characteristic.ContactSensorState).updateValue(urlValue ? Characteristic.ContactSensorState.CONTACT_DETECTED : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED, undefined, Constants.CONTEXT_FROM_WEBHOOK);
@@ -136,9 +137,9 @@ HttpWebHookSensorAccessory.prototype.changeFromServer = function(urlParams) {
 };
 
 HttpWebHookSensorAccessory.prototype.getState = function(callback) {
-  this.log.debug(this.name + ": Getting current state for '%s'...", this.id);
+  this.log.debug('Accessory state read or feedback received.');
   var state = this.storage.getItemSync("http-webhook-" + this.id);
-  this.log.debug(this.name + ": State for '%s' is '%s'", this.id, state);
+  this.log.debug('Accessory state read or feedback received.');
   if (state === undefined) {
     state = false; // force default value if undefined
   }

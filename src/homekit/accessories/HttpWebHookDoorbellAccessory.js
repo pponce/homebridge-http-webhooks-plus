@@ -1,3 +1,4 @@
+const Util = require('../../Util');
 const Constants = require('../../Constants');
 
 function HttpWebHookDoorbellAccessory(ServiceParam, CharacteristicParam, platform, doorbellConfig) {
@@ -5,7 +6,7 @@ function HttpWebHookDoorbellAccessory(ServiceParam, CharacteristicParam, platfor
   Characteristic = CharacteristicParam;
 
   this.platform = platform;
-  this.log = platform.log;
+  this.log = Util.accessoryLog(platform, doorbellConfig);
   this.storage = platform.storage;
 
   this.id = doorbellConfig["id"];
@@ -54,7 +55,7 @@ HttpWebHookDoorbellAccessory.prototype.changeFromServer = function(urlParams) {
           // event value is valid
           // we need updates for 2 x services, but we only want to do 1 x logging and so log only for the doorbell update
           if (serviceSubtype === 'db') {
-            this.log(this.name + ": Pressing '%s' with event '%i'", serviceName, urlParams.event);
+            this.log('Accessory state event.');
             this.service[index].getCharacteristic(Characteristic.ProgrammableSwitchEvent).updateValue(urlParams.event, undefined, Constants.CONTEXT_FROM_WEBHOOK);
           }
           // for the sps just do the update, no logging
@@ -64,7 +65,7 @@ HttpWebHookDoorbellAccessory.prototype.changeFromServer = function(urlParams) {
         } else {
           // event value is invalid
           var errorText  = "event value " + urlParams.event + " is outside of valid values: " + validValues;
-          this.log.warn(this.name + ": WARNING: " + errorText);
+          this.log.warn('Accessory feedback was not applied.');
           return {
             "error" : errorText
           };

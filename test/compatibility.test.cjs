@@ -9,10 +9,10 @@ const baseline = require('./upstream-runtime.json');
 const pkg = require('../package.json');
 
 // Only the reviewed state families and shared routing changed in 0.3.0.
-const changed = new Set(['config.schema.json', 'src/Server.js', 'src/homekit/HttpWebHooksPlatform.js',
+const changed = new Set([...Object.keys(require('./legacy-state-source.json')), 'src/Util.js', 'config.schema.json', 'src/Server.js', 'src/homekit/HttpWebHooksPlatform.js',
   'src/homekit/accessories/HttpWebHookGarageDoorOpenerAccessory.js',
   'src/homekit/accessories/HttpWebHookLockMechanismAccessory.js']);
-test('unaffected accessory families retain their exact upstream implementation', () => {
+test('unchanged shared files retain upstream fingerprints', () => {
   const actual = [];
   function visit(folder) {
     for (const entry of fs.readdirSync(folder, {withFileTypes: true})) {
@@ -72,16 +72,25 @@ test('all original registration aliases remain attached to the new package', () 
   });
 });
 
-test('package is independently publishable with unchanged runtime dependencies', () => {
+test('package is independently publishable with only required runtime dependencies', () => {
   assert.equal(pkg.name, 'homebridge-http-webhooks-plus');
-  assert.equal(pkg.version, '0.4.0');
+  assert.equal(pkg.version, '0.5.0');
   assert.equal(pkg.license, 'GPL-3.0');
   assert.equal(pkg.author, 'benzman81');
-  assert.deepEqual(pkg.dependencies, baseline.dependencies);
+  assert.deepEqual(pkg.dependencies, {'node-persist':baseline.dependencies['node-persist'], selfsigned:baseline.dependencies.selfsigned});
   assert.equal(pkg.engines.node, '>=18');
   assert.equal(pkg.engines.homebridge, baseline.engines.homebridge);
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
   assert.equal(pkg.publishConfig.access, 'public');
   assert.deepEqual(pkg.files, ['index.js', 'src/', 'config.schema.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'docs/COMPATIBILITY.md', 'docs/STATE_API.md']);
   assert.match(pkg.repository.url, /pponce\/homebridge-http-webhooks-plus\.git$/);
+});
+
+test('legacy state logic and identity inputs are unchanged outside logging wiring', () => {
+  for (const [file, expected] of Object.entries(require('./legacy-state-source.json'))) {
+    const text = fs.readFileSync(path.join(root, file), 'utf8').split('\n')
+      .filter(line => !/^\s*(?:this\.log(?:\.(?:debug|warn|info|error))?\(|this\.log =|const Util =)/.test(line))
+      .map(line => line.trim()).join('\n').trim();
+    assert.equal(crypto.createHash('sha256').update(text).digest('hex'), expected, file);
+  }
 });

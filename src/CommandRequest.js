@@ -4,11 +4,11 @@ const https = require('https');
 const {URL, URLSearchParams} = require('url');
 const {StateError, bounded} = require('./StateContract');
 
-function object(value, field) {
+function object(value, field, form = false) {
   try {
     const result = typeof value === 'string' ? JSON.parse(value) : value;
     if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error();
-    if (Object.entries(result).some(([k, v]) => !k || typeof v !== 'string' || /[\r\n]/.test(k + v))) throw new Error();
+    if (Object.entries(result).some(([k, v]) => !k || (form ? !['string', 'number', 'boolean'].includes(typeof v) || (typeof v === 'number' && !Number.isFinite(v)) : typeof v !== 'string') || /[\r\n]/.test(k + v))) throw new Error();
     return result;
   } catch (_) { throw new StateError('invalid_config_' + field); }
 }
@@ -31,40 +31,64 @@ function configure(config, direction) {
   const form = config[field('form')];
   if (form !== undefined && form !== '') {
     if (body !== '') throw new StateError('conflicting_config_' + direction + '_body_form');
-    body = new URLSearchParams(object(form, field('form'))).toString();
+    body = new URLSearchParams(object(form, field('form'), true)).toString();
     if (!Object.keys(headers).some(k => k.toLowerCase() === 'content-type')) headers['Content-Type'] = 'application/x-www-form-urlencoded';
   }
   try { for (const [key, value] of Object.entries(headers)) { http.validateHeaderName(key); http.validateHeaderValue(key, value); } }
   catch (_) { throw new StateError('invalid_config_' + field('headers')); }
   if (Buffer.byteLength(body) > 65536 || Buffer.byteLength(JSON.stringify(headers)) > 8192) throw new StateError('command_config_too_large');
   if (config.rejectUnauthorized !== undefined && typeof config.rejectUnauthorized !== 'boolean') throw new StateError('invalid_config_rejectUnauthorized');
-  return {url, method, headers, body, rejectUnauthorized: config.rejectUnauthorized !== false,
+  const redirects = bounded(config.max_redirects, 0, 0, 5, 'max_redirects');
+  if (!Number.isInteger(redirects)) throw new StateError('invalid_config_max_redirects');
+  return {url, method, headers, body, redirects, rejectUnauthorized: config.rejectUnauthorized !== false,
     timeout: bounded(config.request_timeout_ms, 10000, 100, 60000, 'request_timeout_ms'),
     limit: bounded(config.response_max_bytes, 65536, 1024, 1048576, 'response_max_bytes')};
 }
 function send(options, callback) {
-  if (!options.url) { callback(null); return; }
-  let done = false, request, timer;
+  if (!options.url) { callback(null); return () => {}; }
+  let done = false, request, response, timer, received = 0;
   const finish = error => {
     if (done) return;
     done = true; clearTimeout(timer);
-    if (error && request) request.destroy();
+    if (error) { response?.destroy(); request?.destroy(); }
     callback(error);
   };
-  try {
-    request = (options.url.protocol === 'https:' ? https : http).request(options.url, {
-      method: options.method, headers: options.headers, rejectUnauthorized: options.rejectUnauthorized,
-      maxHeaderSize: 16384
-    }, response => {
-      let size = 0;
-      response.on('data', data => { size += data.length; if (size > options.limit) finish(new StateError('command_response_too_large', 502)); });
-      response.on('aborted', () => finish(new StateError('command_response_aborted', 502)));
-      response.on('error', () => finish(new StateError('command_transport_failed', 502)));
-      response.on('end', () => finish(response.statusCode >= 200 && response.statusCode < 300 ? null : new StateError('command_http_status', 502)));
-    });
-    request.on('error', () => finish(new StateError('command_transport_failed', 502)));
-    timer = setTimeout(() => finish(new StateError('command_timeout', 504)), options.timeout);
-    request.end(options.body);
-  } catch (_) { finish(new StateError('command_transport_failed', 502)); }
+  const fail = (code, status = 502) => finish(new StateError(code, status));
+  const visit = (address, method, body, headers, remaining) => {
+    try {
+      request = (address.protocol === 'https:' ? https : http).request(address, {
+        method, headers, rejectUnauthorized: options.rejectUnauthorized, maxHeaderSize: 16384,
+        agent: false
+      }, reply => {
+        response = reply;
+        reply.on('data', data => { received += data.length; if (received > options.limit) fail('command_response_too_large'); });
+        reply.on('aborted', () => fail('command_response_aborted'));
+        reply.on('error', () => fail('command_transport_failed'));
+        reply.on('end', () => {
+          if (done) return;
+          if ([301,302,303,307,308].includes(reply.statusCode) && reply.headers.location && remaining > 0) {
+            let next;
+            try { next = new URL(reply.headers.location, address); }
+            catch (_) { fail('command_invalid_redirect'); return; }
+            // Command bodies/custom credentials cannot be safely forwarded to another origin.
+            if (next.origin !== address.origin || (next.username && next.username !== address.username) || (next.password && next.password !== address.password) || next.hash) {
+              fail('command_unsafe_redirect'); return;
+            }
+            next.username = address.username; next.password = address.password;
+            if (reply.statusCode === 303 && method !== 'HEAD' || [301,302].includes(reply.statusCode) && method === 'POST') {
+              method = 'GET'; body = '';
+              headers = Object.fromEntries(Object.entries(headers).filter(([k]) => !['content-length','content-type','transfer-encoding'].includes(k.toLowerCase())));
+            }
+            visit(next, method, body, headers, remaining - 1);
+          } else finish(reply.statusCode >= 200 && reply.statusCode < 300 ? null : new StateError('command_http_status', 502));
+        });
+      });
+      request.on('error', () => fail('command_transport_failed'));
+      request.end(body);
+    } catch (_) { fail('command_transport_failed'); }
+  };
+  timer = setTimeout(() => fail('command_timeout', 504), options.timeout);
+  visit(options.url, options.method, options.body, options.headers, options.redirects || 0);
+  return () => fail('command_cancelled', 503);
 }
 module.exports = {configure, send};

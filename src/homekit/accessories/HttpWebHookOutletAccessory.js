@@ -6,7 +6,7 @@ function HttpWebHookOutletAccessory(ServiceParam, CharacteristicParam, platform,
   Characteristic = CharacteristicParam;
 
   this.platform = platform;
-  this.log = platform.log;
+  this.log = Util.accessoryLog(platform, outletConfig);
   this.storage = platform.storage;
 
   this.id = outletConfig["id"];
@@ -59,7 +59,7 @@ HttpWebHookOutletAccessory.prototype.changeFromServer = function(urlParams) {
       // '%s'
       // to '%s'.",accessory.id,stateBool);
       if (cachedState !== stateBool) {
-        this.log(this.name + ": Change HomeKit state for outlet to '%s'.", stateBool);
+        this.log('Accessory state event.');
         this.service.getCharacteristic(Characteristic.On).updateValue(stateBool, undefined, Constants.CONTEXT_FROM_WEBHOOK);
       }
     }
@@ -71,7 +71,7 @@ HttpWebHookOutletAccessory.prototype.changeFromServer = function(urlParams) {
       // '%s'
       // to '%s'.",accessory.id,stateBool);
       if (cachedStateInUse !== stateOutletInUseBool) {
-        this.log(this.name + ": Change HomeKit stateInUse for outlet to '%s'.", stateOutletInUseBool);
+        this.log('Accessory state event.');
         this.service.getCharacteristic(Characteristic.OutletInUse).updateValue(stateOutletInUseBool, undefined, Constants.CONTEXT_FROM_WEBHOOK);
       }
     }
@@ -82,7 +82,7 @@ HttpWebHookOutletAccessory.prototype.changeFromServer = function(urlParams) {
 }
 
 HttpWebHookOutletAccessory.prototype.getState = function(callback) {
-  this.log.debug(this.name + ": Getting current state for '%s'...", this.id);
+  this.log.debug('Accessory state read or feedback received.');
   var state = this.storage.getItemSync("http-webhook-" + this.id);
   if (state === undefined) {
     state = false;
@@ -91,7 +91,7 @@ HttpWebHookOutletAccessory.prototype.getState = function(callback) {
 };
 
 HttpWebHookOutletAccessory.prototype.getStateInUse = function(callback) {
-  this.log.debug(this.name + ": Getting current state for '%s'...", this.id);
+  this.log.debug('Accessory state read or feedback received.');
   var stateInUse = this.storage.getItemSync("http-webhook-" + this.id + "-inUse");
   if (stateInUse === undefined) {
     stateInUse = false;
@@ -100,7 +100,7 @@ HttpWebHookOutletAccessory.prototype.getStateInUse = function(callback) {
 };
 
 HttpWebHookOutletAccessory.prototype.setState = function(powerOn, callback, context) {
-  this.log(this.name + ": Switch outlet state for '%s'...", this.id);
+  this.log('Accessory state event.');
   this.storage.setItemSync("http-webhook-" + this.id, powerOn);
   var urlToCall = this.onURL;
   var urlMethod = this.onMethod;

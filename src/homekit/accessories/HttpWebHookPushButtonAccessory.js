@@ -6,7 +6,7 @@ function HttpWebHookPushButtonAccessory(ServiceParam, CharacteristicParam, platf
   Characteristic = CharacteristicParam;
 
   this.platform = platform;
-  this.log = platform.log;
+  this.log = Util.accessoryLog(platform, pushButtonConfig);
   this.storage = platform.storage;
 
   this.id = pushButtonConfig["id"];
@@ -40,7 +40,7 @@ HttpWebHookPushButtonAccessory.prototype.changeFromServer = function(urlParams) 
     // this.log("[INFO Http WebHook Server] State change of '%s'
     // to '%s'.",accessory.id,stateBool);
     if (stateBool) {
-      this.log(this.name + ": Change HomeKit state for push button to '%s'.", stateBool);
+      this.log('Accessory state event.');
       this.service.getCharacteristic(Characteristic.On).updateValue(stateBool, undefined, Constants.CONTEXT_FROM_WEBHOOK);
       setTimeout(function() {
         this.service.getCharacteristic(Characteristic.On).updateValue(false, undefined, Constants.CONTEXT_FROM_TIMEOUTCALL);
@@ -53,13 +53,13 @@ HttpWebHookPushButtonAccessory.prototype.changeFromServer = function(urlParams) 
 }
 
 HttpWebHookPushButtonAccessory.prototype.getState = function(callback) {
-  this.log.debug(this.name + ": Getting current state for '%s'...", this.id);
+  this.log.debug('Accessory state read or feedback received.');
   var state = false;
   callback(null, state);
 };
 
 HttpWebHookPushButtonAccessory.prototype.setState = function(powerOn, callback, context) {
-  this.log(this.name + ": Push buttons state change for '%s'...", this.id);
+  this.log('Accessory state event.');
   if (!powerOn) {
     callback(null);
   }

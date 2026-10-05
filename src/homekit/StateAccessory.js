@@ -25,7 +25,7 @@ const definitions = {
 function unavailable() { return new Error('state_unavailable'); }
 class StateAccessory {
   constructor(Service, Characteristic, platform, config, type) {
-    this.platform = platform; this.log = platform.log; this.storage = platform.storage;
+    this.platform = platform; this.log = require('../Util').accessoryLog(platform, config); this.storage = platform.storage;
     this.id = config.id; this.name = config.name; this.type = type;
     if (!((typeof this.id === 'string' && this.id.length > 0 && this.id.length <= 128) ||
         (Number.isSafeInteger(this.id) && this.id >= 0))) throw new StateError('invalid_config_id');
@@ -46,7 +46,7 @@ class StateAccessory {
     }
     this.obstructionTimeout = bounded(config.obstruction_timeout_seconds, 0, 0, 604800, 'obstruction_timeout_seconds');
     if (this.obstructionTimeout && !this.obstructionMonitoring) throw new StateError('obstruction_timeout_requires_monitoring');
-    this.deadlines = {}; this.timers = {}; this.closed = false;
+    this.deadlines = {}; this.timers = {}; this.closed = false; this.pendingCommands = new Set();
     this.commands = {open: CommandRequest.configure(config, 'open'), close: CommandRequest.configure(config, 'close')};
     this.responseMode = platform.webhookResponseMode || 'legacy';
     this.store = new StateStore(platform.cacheDirectory || Constants.DEFAULT_CACHE_DIR, type, String(this.id));
@@ -108,6 +108,7 @@ class StateAccessory {
   }
   close() {
     this.closed = true;
+    for (const cancel of this.pendingCommands) cancel();
     for (const timer of Object.values(this.timers)) clearTimeout(timer);
     this.timers = {};
   }
@@ -201,7 +202,9 @@ class StateAccessory {
       this.commit({targetState: value}, false, 'requested');
       this.characteristics.targetState.updateValue(value);
       const generation = ++this.generation;
-      CommandRequest.send(this.commands[value === 0 ? 'open' : 'close'], error => {
+      let cancel, finished = false;
+      cancel = CommandRequest.send(this.commands[value === 0 ? 'open' : 'close'], error => {
+        finished = true; this.pendingCommands.delete(cancel);
         try {
           // HAP's SET callback also writes target: reject obsolete completions.
           if (generation !== this.generation) {
@@ -215,6 +218,7 @@ class StateAccessory {
           done(error);
         } catch (failure) { done(failure); }
       });
+      if (!finished) this.pendingCommands.add(cancel);
     } catch (error) { done(error); }
   }
 }

@@ -23,7 +23,9 @@ function HttpWebHooksPlatform(log, config, homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
 
-  this.log = log;
+  this.rawLog = log;
+  this.logConfig = config;
+  this.log = require('../SafeLog').create(log, config);
   this.hap = homebridge.hap;
   this.cacheDirectory = config["cache_directory"] || Constants.DEFAULT_CACHE_DIR;
   this.storage = require('node-persist');

@@ -1,0 +1,15 @@
+{
+  "src/homekit/accessories/HttpWebHookOutletAccessory.js": "05f76e6f14900d3467deca4d936f317e53c0979f70ea3782a8084d373b6ef87f",
+  "src/homekit/accessories/HttpWebHookThermostatAccessory.js": "390bf269204914e1566527bc87735134cc784abdaf8befdf85f1a46f000677a8",
+  "src/homekit/accessories/HttpWebHookDoorbellAccessory.js": "3d1f755377939ffb29cafbc057bf61f397646a02f4997aeab822b41432c95104",
+  "src/homekit/accessories/HttpWebHookFanv2Accessory.js": "f053337a3963044e646b56941478940dafe365b9c1bc7e670e1b20d611a1dfd7",
+  "src/homekit/accessories/HttpWebHookSensorAccessory.js": "75196832309fa3dc450a214850482650b6f42a6adb801eb156cd668a8e683c34",
+  "src/homekit/accessories/HttpWebHookStatelessSwitchAccessory.js": "5617ca44eae90d06c95cddb9cebd581cdb37758b25cc74bd75c1df42e012cb0b",
+  "src/homekit/accessories/HttpWebHookPushButtonAccessory.js": "520e4c20171323e138cc81f35122eecdb1bf55e053d7b21530c65df97900c53c",
+  "src/homekit/accessories/HttpWebHookWindowCoveringAccessory.js": "ab198a654834eadac9386eee7e60486309020daca11312b477354182f9865090",
+  "src/homekit/accessories/HttpWebHookSecurityAccessory.js": "670f28a93071b984b347e9813dc001f5a078471cebb1bd6530337b28f50dab4e",
+  "src/homekit/accessories/HttpWebHookCarbonDioxideSensorAccessory.js": "1964b4622d1bb9de8eff0ee0c17aa6304be19e1f3ff13c5b1f422fbf6e775bf8",
+  "src/homekit/accessories/HttpWebHookLightBulbAccessory.js": "b820a65adaafbb8b5382dc3db5ff8ad58e3fdd59b5b5b80222cd9e1df2df4437",
+  "src/homekit/accessories/HttpWebHookValveAccessory.js": "1d3029e5208d1317816c027cac8b49a72dd43ecbde16568c65331ae23fb2f9e0",
+  "src/homekit/accessories/HttpWebHookSwitchAccessory.js": "8dc4eddfa623ab59474da3e4e531f67c665d72b7944a0455b1eeaa0a8bd537eb"
+}

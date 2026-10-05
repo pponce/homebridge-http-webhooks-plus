@@ -1,3 +1,32 @@
+# Compatibility for 0.5.0
+
+All accessory command paths now use Node's maintained HTTP/HTTPS transport.
+`request` and unused `http-auth` dependencies are removed. No automatic retries.
+Default deadline remains 10 seconds; response limit defaults 64 KiB. Redirects
+are now disabled for every family; opt into `max_redirects` (1–5) for same-origin
+redirects only. Cross-origin redirects and changed URL credentials are rejected.
+301/302 POST and 303 responses switch to GET; 307/308 preserve method/body.
+TLS verification remains on unless `rejectUnauthorized: false` is configured.
+
+Raw strings and flat JSON form objects with string/number/boolean values are
+supported. Malformed configuration, nested/array form values, conflicting raw
+body/form, incomplete TLS file pairs and invalid limits fail early with fixed
+error codes. Legacy families continue sending payloads only for POST/PUT/PATCH.
+URL user-info Basic authentication and explicit Authorization headers remain
+supported. Legacy placeholder substitutions remain unchanged.
+
+Logging is configurable at platform and accessory level, with mandatory redaction
+and no HTTP payload dumps. Existing state transitions are concise; routine reads
+use debug. Debug cannot bypass Homebridge's own effective debug setting.
+Other families' state semantics are unchanged; garage/lock state features are
+not implicitly enabled for other accessory types. All aliases and identities
+remain unchanged. UI arrays retain one bound item per configured accessory.
+
+Home can retain its previous display until it refreshes, even after the API and
+HAP reads report expired feedback. Reopening Home may be needed to observe
+unavailability; recovery can also take time. API expiry is not a promise of an
+immediate change on an already-open Home screen.
+
 # Compatibility for 0.3.0
 
 The garage/lock native [state API](STATE_API.md) is opt-in. Optimistic mode and

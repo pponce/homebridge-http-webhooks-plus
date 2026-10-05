@@ -1,3 +1,4 @@
+const Util = require('../../Util');
 const Constants = require('../../Constants');
 
 function HttpWebHookStatelessSwitchAccessory(ServiceParam, CharacteristicParam, platform, statelessSwitchConfig) {
@@ -5,7 +6,7 @@ function HttpWebHookStatelessSwitchAccessory(ServiceParam, CharacteristicParam, 
   Characteristic = CharacteristicParam;
 
   this.platform = platform;
-  this.log = platform.log;
+  this.log = Util.accessoryLog(platform, statelessSwitchConfig);
   this.storage = platform.storage;
 
   this.id = statelessSwitchConfig["id"];
@@ -36,7 +37,7 @@ HttpWebHookStatelessSwitchAccessory.prototype.changeFromServer = function(urlPar
     for (var index = 0; index < this.service.length; index++) {
       var serviceName = this.service[index].getCharacteristic(Characteristic.Name).value;
       if (serviceName === urlParams.buttonName) {
-        this.log(this.name + ": Pressing '%s' with event '%i'", urlParams.buttonName, urlParams.event)
+        this.log('Accessory state event.');
         this.service[index].getCharacteristic(Characteristic.ProgrammableSwitchEvent).updateValue(urlParams.event, undefined, Constants.CONTEXT_FROM_WEBHOOK);
       }
     }

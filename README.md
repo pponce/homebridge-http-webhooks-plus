@@ -2,7 +2,7 @@
 
 Independent fork of [benzman81/homebridge-http-webhooks](https://github.com/benzman81/homebridge-http-webhooks), published as **homebridge-http-webhooks-plus**. The original GPL-3.0 license and attribution are retained.
 
-**Version 0.2.1 was the upstream-compatible package rename. Version 0.3 adds native garage/lock state controls; 0.4 adds optional feedback expiry.** It works with any compatible HTTP client and has no dependency on a custom controller.
+**Version 0.2.1 was the upstream-compatible package rename. Version 0.3 adds native garage/lock state controls; 0.4 adds optional feedback expiry; 0.5 adds shared HTTP limits and redacted logging.** It works with any compatible HTTP client and has no dependency on a custom controller.
 
 **Already using the original package?** Read [migration and HomeKit compatibility](docs/COMPATIBILITY.md) before replacing it. Keep `"platform": "HttpWebHooks"`, existing accessory IDs/names and bridge pairing. Do not install both plugins together. Locally applied patches need separate preservation during this initial release.
 
@@ -32,8 +32,8 @@ or **Lock Mechanisms**, and open the existing device's settings.
 | `request_timeout_ms` | `10000` | Bound each outgoing garage/lock command, including response reading. |
 | `response_max_bytes` | `65536` | Bound the outgoing command's response body. |
 | `feedback_timeout_seconds` (0.4.0) | `0` | Disable expiry, or expire current-state feedback after this many seconds. |
-| `obstruction_monitoring` (garage, next release) | `false` | Require independent obstruction reports; start unavailable until one arrives. |
-| `obstruction_timeout_seconds` (garage, next release) | `0` | With monitoring enabled, optionally expire obstruction feedback independently. |
+| `obstruction_monitoring` (garage, 0.4.0) | `false` | Require independent obstruction reports; start unavailable until one arrives. |
+| `obstruction_timeout_seconds` (garage, 0.4.0) | `0` | With monitoring enabled, optionally expire obstruction feedback independently. |
 
 Use optimistic mode for intentional virtual devices. Use external mode when a
 sensor or integration reports state. The legacy garage `external_state` alias is
@@ -586,3 +586,46 @@ The cache directory is used to cache the state of the accessories. It must point
 ## HTTPS
 If you want to create a secure connection for the webhooks you need to enable it by setting *https* to true. Then a self signed
 ssl certificate will be created automatically and a secure connection will be used. If you want to use your own generated ssl certificate you can do this by setting the values for *https_keyfile* and *https_certfile* to the corresponding file paths.
+
+## Shared HTTP and logging controls (0.5.0)
+
+These reliability controls apply independently of the garage/lock state API.
+Every command accessory uses the same bounded Node HTTP/HTTPS transport. No
+integration or controller is required, and commands are never automatically
+retried. Existing accessories, IDs, cache keys and command placeholders remain.
+
+| Setting | Scope | Default / bounds |
+| --- | --- | --- |
+| `log_level` | Platform and each accessory | `inherit`, or `error`, `warn`, `info`, `debug` |
+| `extra_redaction_keys` | Platform | Empty; at most 32 field names (letters/digits/underscore/hyphen, 1–64 characters) |
+| `request_timeout_ms` | Each command accessory | 10000; 100–60000 ms total across redirects |
+| `response_max_bytes` | Each command accessory | 65536; 1024–1048576 bytes total across redirects |
+| `max_redirects` | Each command accessory | 0 (disabled); 0–5, same origin only |
+| `rejectUnauthorized` | Each command accessory | true; false allows local/self-signed TLS certificates |
+| `webhook_timeout_ms` | Platform listener | 10000; 1000–60000 ms |
+| `webhook_body_max_bytes` | Platform legacy routes | 65536; 1024–1048576 bytes |
+| `state_api_body_max_bytes` | Platform v1 routes | 8192; 1024–65536 bytes |
+
+Accessory `inherit` uses the platform setting. Platform `inherit` delegates to
+Homebridge logging. Selecting `debug` still requires Homebridge's effective
+(main or child-bridge) debug logging; the plugin never forces that gate open.
+Reads and HTTP completion detail use debug, and state-event messages use info.
+Credentials and custom secret keys are redacted at every level. Request/response
+bodies and full headers are never dumped; there is no raw-secrets mode.
+
+Configure these controls in **Webhook Settings** or each device's HTTP/logging
+section. Forms are optional JSON objects with string, finite number or boolean
+values (`0` and `false` included); leave raw body empty when using a form.
+[Compatibility](docs/COMPATIBILITY.md) explains deliberate validation and redirect
+changes from upstream. The listener retains host/port, Basic auth, TLS certificate
+and CORS choices. Use `webhook_listen_host: "127.0.0.1"` when every caller is local;
+CORS is not authentication. Provide both Basic credentials or neither, and both
+TLS file paths or neither (automatic certificates remain supported).
+
+### Observing expired feedback in Home
+
+The state API reports `availability.currentState: "stale"` when a configured
+feedback deadline expires, and HAP reads return an unavailable error. Home may
+continue displaying its cached value until it refreshes. Reopening Home can
+reveal No Response, and returning to the fresh state may also take time. This
+is distinct from the physical position and from network/startup failures.

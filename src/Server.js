@@ -1,7 +1,7 @@
 const Constants = require('./Constants');
 
 const crypto = require('crypto');
-const {StateError, bodyObject, choice} = require('./StateContract');
+const {StateError, bodyObject, choice, bounded} = require('./StateContract');
 var http = require('http');
 var https = require('https');
 var url = require('url');
@@ -16,9 +16,18 @@ function Server(ServiceParam, CharacteristicParam, platform, platformConfig) {
   this.log = platform.log;
   this.storage = platform.storage;
 
-  this.webhookPort = platformConfig["webhook_port"] || Constants.DEFAULT_PORT;
+  const port = platformConfig.webhook_port === undefined || platformConfig.webhook_port === '' ? Constants.DEFAULT_PORT : platformConfig.webhook_port;
+  if (!/^[0-9]+$/.test(String(port)) || Number(port) < 1 || Number(port) > 65535) throw new StateError('invalid_config_webhook_port');
+  this.webhookPort = Number(port);
+  this.bodyLimit = bounded(platformConfig.webhook_body_max_bytes, 65536, 1024, 1048576, 'webhook_body_max_bytes');
+  this.stateBodyLimit = bounded(platformConfig.state_api_body_max_bytes, 8192, 1024, 65536, 'state_api_body_max_bytes');
+  this.deadline = bounded(platformConfig.webhook_timeout_ms, 10000, 1000, 60000, 'webhook_timeout_ms');
   this.webhookListenHost = platformConfig["webhook_listen_host"] || Constants.DEFAULT_LISTEN_HOST;
   this.webhookEnableCORS = platformConfig["webhook_enable_cors"] || false;
+  for (const key of ['webhook_enable_cors','https']) if (platformConfig[key] !== undefined && typeof platformConfig[key] !== 'boolean') throw new StateError('invalid_config_' + key);
+  if (typeof this.webhookListenHost !== 'string' || !this.webhookListenHost || this.webhookListenHost.length > 253 || /[\s/]/.test(this.webhookListenHost)) throw new StateError('invalid_config_webhook_listen_host');
+  for (const key of ['http_auth_user','http_auth_pass','https_keyfile','https_certfile']) if (platformConfig[key] !== undefined && typeof platformConfig[key] !== 'string') throw new StateError('invalid_config_' + key);
+  if (Boolean(platformConfig.https_keyfile) !== Boolean(platformConfig.https_certfile)) throw new StateError('incomplete_config_tls_files');
   this.httpAuthUser = platformConfig["http_auth_user"] || null;
   this.httpAuthPass = platformConfig["http_auth_pass"] || null;
   if ((this.httpAuthUser === null) !== (this.httpAuthPass === null) ||
@@ -113,10 +122,10 @@ Server.prototype.createServerCallback = function() {
       if (ended) return;
       ended = true; clearTimeout(timer);
       response.writeHead(status, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'});
-      response.end(JSON.stringify(value));
+      response.end(JSON.stringify(value), () => { if (status >= 400) request.socket?.destroy(); });
     };
-    const failure = error => finish(error instanceof StateError ? error.status : 500,
-      {success: false, error: error instanceof StateError ? error.code : 'internal_error'});
+    const failure = error => { response.setHeader('Connection', 'close'); finish(error instanceof StateError ? error.status : 500,
+      {success: false, error: error instanceof StateError ? error.code : 'internal_error'}); };
     response.on('error', () => { ended = true; clearTimeout(timer); });
     response.on('close', () => { ended = true; clearTimeout(timer); });
     request.on('error', () => { ended = true; clearTimeout(timer); });
@@ -157,8 +166,8 @@ Server.prototype.createServerCallback = function() {
         accessory = this.byId.get(parsed.query.accessoryId);
         if (!accessory) throw new StateError('accessory_not_found', 404);
       }
-      let size = 0; const chunks = [], limit = isV1 ? 8192 : 65536;
-      timer = setTimeout(() => { response.setHeader('Connection', 'close'); finish(408, {success: false, error: 'request_timeout'}); request.resume(); }, 10000);
+      let size = 0; const chunks = [], limit = isV1 ? this.stateBodyLimit : this.bodyLimit;
+      timer = setTimeout(() => { response.setHeader('Connection', 'close'); finish(408, {success: false, error: 'request_timeout'}); request.resume(); }, this.deadline);
       request.on('data', chunk => {
         if (ended) return;
         size += chunk.length;
@@ -181,13 +190,17 @@ Server.prototype.createServerCallback = function() {
 
 Server.prototype.start = function() {
   const callback = this.createServerCallback();
-  this.listener = this.https ? https.createServer(this.getSSLServerOptions(), callback) : http.createServer(callback);
-  this.listener.requestTimeout = 10000;
-  this.listener.headersTimeout = 10000;
+  this.listener = this.https ? https.createServer({...this.getSSLServerOptions(), maxHeaderSize: 16384}, callback) : http.createServer({maxHeaderSize: 16384}, callback);
+  this.listener.requestTimeout = this.deadline;
+  this.listener.headersTimeout = this.deadline;
+  this.listener.setTimeout(this.deadline, socket => socket.destroy());
+  this.listener.keepAliveTimeout = 5000;
+  this.listener.on('clientError', (_error, socket) => { socket.destroy(); });
   this.listener.on('error', () => { this.log.error('HTTP Webhooks listener failed; check listener configuration.'); });
   this.listener.listen(this.webhookPort, this.webhookListenHost);
 };
 Server.prototype.close = function() {
+  require('./Util').close(this.platform);
   for (const accessory of this.accessories || []) if (typeof accessory.close === 'function') accessory.close();
   if (this.listener) { this.listener.close(); if (this.listener.closeAllConnections) this.listener.closeAllConnections(); }
 };
