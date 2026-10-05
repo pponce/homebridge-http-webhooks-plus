@@ -1,8 +1,8 @@
 {
-  "name": "homebridge-http-webhooks",
-  "version": "0.2.0",
-  "displayName": "Homebridge Webhooks",
-  "description": "A http plugin with support of webhooks for Homebridge: https://github.com/nfarina/homebridge",
+  "name": "homebridge-http-webhooks-plus",
+  "version": "0.2.1",
+  "displayName": "Homebridge HTTP Webhooks Plus",
+  "description": "HTTP webhooks and virtual accessories for Homebridge; independently maintained fork of homebridge-http-webhooks.",
   "license": "GPL-3.0",
   "keywords": [
     "homebridge-plugin",
@@ -19,10 +19,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/benzman81/homebridge-http-webhooks.git"
+    "url": "git+https://github.com/pponce/homebridge-http-webhooks-plus.git"
   },
   "bugs": {
-    "url": "https://github.com/benzman81/homebridge-http-webhooks/issues"
+    "url": "https://github.com/pponce/homebridge-http-webhooks-plus/issues"
   },
   "engines": {
     "node": ">=9.11.2",
@@ -34,6 +34,23 @@
     "request": "^2.88.2",
     "selfsigned": "^2.4.1"
   },
-  "homepage": "https://github.com/benzman81/homebridge-http-webhooks#readme",
-  "author": "benzman81"
+  "homepage": "https://github.com/pponce/homebridge-http-webhooks-plus#readme",
+  "author": "benzman81",
+  "files": [
+    "index.js",
+    "src/",
+    "config.schema.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "docs/COMPATIBILITY.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.cjs",
+    "prepublishOnly": "npm test"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }

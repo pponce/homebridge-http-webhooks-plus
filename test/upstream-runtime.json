@@ -1,0 +1,35 @@
+{
+  "commit": "45b13fb1af213d960ee3d0f6259d2ff824a53787",
+  "sha256": {
+    "config.schema.json": "90bb1921fba17a7b6f5048e85925a75c46562091ed70dc258ef94687a4db8a1b",
+    "src/Constants.js": "3c0e8fb7956cde9bed11943db7b92652fd150933e373857fc045b588d9cbd441",
+    "src/Server.js": "aa9e8512c4c364244dfe79a08544ad165ccd8e796702f4f602292bd6438aeecc",
+    "src/Util.js": "8ebb21f16d1d4ef4c2fd7d45e4246b997cde5e812972b83f7126ebcee3babb67",
+    "src/homekit/HttpWebHooksPlatform.js": "a15af4286396d47b2bcf9722c11a0444dcb70e485f8d8af2fb188ff876a0a271",
+    "src/homekit/accessories/HttpWebHookCarbonDioxideSensorAccessory.js": "e8d3402e66cf8678e80b5bcc044a70a1e8e7f954b056b97f843cd5a3df3a81b6",
+    "src/homekit/accessories/HttpWebHookDoorbellAccessory.js": "1bdaf31a8e0e5b214e9f22c0da9d4a6aa5061146e36780c9d7c3370b10649ef7",
+    "src/homekit/accessories/HttpWebHookFanv2Accessory.js": "d4b6f14551dbf43b1d43779c8d40fc794179bc7fd3fa508e93143c5cec308454",
+    "src/homekit/accessories/HttpWebHookGarageDoorOpenerAccessory.js": "e4ea06a6153fa3a6804f1dbdff29070913b1554a40d20cb44660ee579f225a19",
+    "src/homekit/accessories/HttpWebHookLightBulbAccessory.js": "cf6ad976e26a674f836f9060895cfcbfe8c7dc25d4928cb989c5f9b788085262",
+    "src/homekit/accessories/HttpWebHookLockMechanismAccessory.js": "a98e45ffb6879d73d3a3737a6ddf02407963d3bf25df8ed1d9ebd83094b16378",
+    "src/homekit/accessories/HttpWebHookOutletAccessory.js": "2230517f63086e9e479528fc49eb85983facae3bb1e650ad3755b50852456bea",
+    "src/homekit/accessories/HttpWebHookPushButtonAccessory.js": "2c818d0356995f4c2eb8b69472b19e3b6f6cd0a71092409014f153abfe49601c",
+    "src/homekit/accessories/HttpWebHookSecurityAccessory.js": "b8bf7fb737735382239bd7d74ba8c9dbf0131331f9494c4647b87ecb06c00ddd",
+    "src/homekit/accessories/HttpWebHookSensorAccessory.js": "542d9d0120434baf9a6c5789d1d94702b418965b1b06b92c02d78afd997f38e3",
+    "src/homekit/accessories/HttpWebHookStatelessSwitchAccessory.js": "6dfcd01d00776fc98c39fcbbe16be9dab2c479eb85ef500d8ab01fe97d9f35c0",
+    "src/homekit/accessories/HttpWebHookSwitchAccessory.js": "14de04aca0ce6e00cb25186defb1f466865d31d41c8bcc93160584eae6ab8687",
+    "src/homekit/accessories/HttpWebHookThermostatAccessory.js": "a44b4d2caf307e8696e92d4faa2dd0b50f117b86b4efa044c700bcfa4ee5c6a3",
+    "src/homekit/accessories/HttpWebHookValveAccessory.js": "d87bef0574dda407c4df7440668e0d96b89b5b31f575cf33a6be9cd0c5295012",
+    "src/homekit/accessories/HttpWebHookWindowCoveringAccessory.js": "6a9e1c69ac7cf14ad004f2d5b956f505074d67f8b547f8c49bc9b3b33ee224ff"
+  },
+  "dependencies": {
+    "http-auth": "^4.2.0",
+    "node-persist": "^2.1.0",
+    "request": "^2.88.2",
+    "selfsigned": "^2.4.1"
+  },
+  "engines": {
+    "node": ">=9.11.2",
+    "homebridge": "^1.8.4||^2.0.0-beta"
+  }
+}

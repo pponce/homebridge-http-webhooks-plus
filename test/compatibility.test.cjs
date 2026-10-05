@@ -1,0 +1,83 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const vm = require('node:vm');
+const root = path.resolve(__dirname, '..');
+const baseline = require('./upstream-runtime.json');
+const pkg = require('../package.json');
+
+// The first Plus release deliberately changes packaging, not accessory behavior.
+// Replace these baseline gates with behavioral tests when a feature is introduced.
+test('0.2.1 retains every upstream runtime file and the complete config schema', () => {
+  const actual = [];
+  function visit(folder) {
+    for (const entry of fs.readdirSync(folder, {withFileTypes: true})) {
+      const full = path.join(folder, entry.name);
+      if (entry.isDirectory()) visit(full);
+      else actual.push(path.relative(root, full).split(path.sep).join('/'));
+    }
+  }
+  visit(path.join(root, 'src'));
+  actual.push('config.schema.json');
+  assert.deepEqual(actual.sort(), Object.keys(baseline.sha256).sort());
+  for (const [file, expected] of Object.entries(baseline.sha256)) {
+    const digest = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex');
+    assert.equal(digest, expected, file);
+  }
+});
+
+test('all original registration aliases remain attached to the new package', () => {
+  const calls = [];
+  const constructors = new Map();
+  const sandbox = {module: {exports: {}}, require(name) {
+    const constructor = {source: name};
+    constructors.set(name, constructor);
+    return constructor;
+  }};
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'index.js'), 'utf8'), sandbox);
+  sandbox.module.exports({
+    registerPlatform(...args) { calls.push(['platform', ...args]); },
+    registerAccessory(...args) { calls.push(['accessory', ...args]); }
+  });
+  const expected = [
+    ['HttpWebHooks', 'HttpWebHooksPlatform'],
+    ['HttpWebHookSensor', 'HttpWebHookSensorAccessory'],
+    ['HttpWebHookSwitch', 'HttpWebHookSwitchAccessory'],
+    ['HttpWebHookPushButton', 'HttpWebHookPushButtonAccessory'],
+    ['HttpWebHookDoorbell', 'HttpWebHookDoorbellAccessory'],
+    ['HttpWebHookLight', 'HttpWebHookLightBulbAccessory'],
+    ['HttpWebHookThermostat', 'HttpWebHookThermostatAccessory'],
+    ['HttpWebHookOutlet', 'HttpWebHookOutletAccessory'],
+    ['HttpWebHookSecurity', 'HttpWebHookSecurityAccessory'],
+    ['HttpWebHookGarageDoorOpener', 'HttpWebHookGarageDoorOpenerAccessory'],
+    ['HttpWebHookStatelessSwitch', 'HttpWebHookStatelessSwitchAccessory'],
+    ['HttpWebHookLockMechanism', 'HttpWebHookLockMechanismAccessory'],
+    ['HttpWebHookWindowCovering', 'HttpWebHookWindowCoveringAccessory'],
+    ['HttpWebHookFanv2', 'HttpWebHookFanv2Accessory'],
+    ['HttpWebHookCarbonDioxideSensor', 'HttpWebHookCarbonDioxideSensorAccessory'],
+    ['HttpWebHookValve', 'HttpWebHookValveAccessory']
+  ];
+  assert.equal(calls.length, expected.length);
+  expected.forEach(([alias, file], i) => {
+    assert.equal(calls[i][0], i === 0 ? 'platform' : 'accessory');
+    assert.equal(calls[i][1], 'homebridge-http-webhooks-plus');
+    assert.equal(calls[i][2], alias);
+    const source = './src/homekit/' + (i === 0 ? '' : 'accessories/') + file;
+    assert.equal(calls[i][3], constructors.get(source));
+  });
+});
+
+test('package is independently publishable with unchanged runtime dependencies', () => {
+  assert.equal(pkg.name, 'homebridge-http-webhooks-plus');
+  assert.equal(pkg.version, '0.2.1');
+  assert.equal(pkg.license, 'GPL-3.0');
+  assert.equal(pkg.author, 'benzman81');
+  assert.deepEqual(pkg.dependencies, baseline.dependencies);
+  assert.deepEqual(pkg.engines, baseline.engines);
+  assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
+  assert.equal(pkg.publishConfig.access, 'public');
+  assert.deepEqual(pkg.files, ['index.js', 'src/', 'config.schema.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'docs/COMPATIBILITY.md']);
+  assert.match(pkg.repository.url, /pponce\/homebridge-http-webhooks-plus\.git$/);
+});

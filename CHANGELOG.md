@@ -1,3 +1,10 @@
+# 0.2.1 — HTTP Webhooks Plus
+
+- Publish the independent fork as `homebridge-http-webhooks-plus`.
+- Update package registration and repository links while retaining every existing platform/accessory alias.
+- Preserve upstream 0.2.0 runtime source, configuration schema, dependencies and state behavior.
+- Add compatibility checks, package CI and migration documentation. No new controller-specific behavior is included.
+
 ### 0.2.0
 - Added Homebridge v2 compytability (thanks to jsiegenthaler).
 - Added Doorbell (thanks to jsiegenthaler).

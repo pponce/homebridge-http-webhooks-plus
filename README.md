@@ -1,4 +1,11 @@
-# homebridge-http-webhooks
+# homebridge-http-webhooks-plus
+
+Independent fork of [benzman81/homebridge-http-webhooks](https://github.com/benzman81/homebridge-http-webhooks), published as **homebridge-http-webhooks-plus**. The original GPL-3.0 license and attribution are retained.
+
+**Version 0.2.1 preserves upstream 0.2.0 accessory behavior and configuration.** Only package registration and release metadata change; configurable enhancements will follow in later releases. It works with any compatible HTTP client and has no dependency on a custom controller.
+
+**Already using the original package?** Read [migration and HomeKit compatibility](docs/COMPATIBILITY.md) before replacing it. Keep `"platform": "HttpWebHooks"`, existing accessory IDs/names and bridge pairing. Do not install both plugins together. Locally applied patches need separate preservation during this initial release.
+
 A http plugin with support of webhooks for [Homebridge](https://github.com/nfarina/homebridge).
 
 The plugin gets its states from any system that is calling the url to trigger a state change.
@@ -7,7 +14,7 @@ Currently supports contact, motion, occupancy, smoke sensors, switches, push but
 
 # Installation
 1. Install homebridge using: `npm install -g homebridge`
-2. Install this plugin using: `npm install -g homebridge-http-webhooks`
+2. Install this plugin using: `npm install -g homebridge-http-webhooks-plus`
 3. Update your configuration file. See sample-config.json snippet below.
 
 # Retrieve State

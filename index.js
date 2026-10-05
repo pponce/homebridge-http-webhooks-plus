@@ -16,20 +16,20 @@ var HttpWebHookCarbonDioxideSensoryAccessory = require('./src/homekit/accessorie
 var HttpWebHookValveAccessory = require('./src/homekit/accessories/HttpWebHookValveAccessory');
 
 module.exports = function(homebridge) {
-  homebridge.registerPlatform("homebridge-http-webhooks", "HttpWebHooks", HttpWebHooksPlatform);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookSensor", HttpWebHookSensorAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookSwitch", HttpWebHookSwitchAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookPushButton", HttpWebHookPushButtonAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookDoorbell", HttpWebHookDoorbellAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookLight", HttpWebHookLightBulbAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookThermostat", HttpWebHookThermostatAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookOutlet", HttpWebHookOutletAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookSecurity", HttpWebHookSecurityAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookGarageDoorOpener", HttpWebHookGarageDoorOpenerAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookStatelessSwitch", HttpWebHookStatelessSwitchAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookLockMechanism", HttpWebHookLockMechanismAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookWindowCovering", HttpWebHookWindowCoveringAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookFanv2", HttpWebHookFanv2Accessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookCarbonDioxideSensor", HttpWebHookCarbonDioxideSensoryAccessory);
-  homebridge.registerAccessory("homebridge-http-webhooks", "HttpWebHookValve", HttpWebHookValveAccessory);
+  homebridge.registerPlatform("homebridge-http-webhooks-plus", "HttpWebHooks", HttpWebHooksPlatform);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookSensor", HttpWebHookSensorAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookSwitch", HttpWebHookSwitchAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookPushButton", HttpWebHookPushButtonAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookDoorbell", HttpWebHookDoorbellAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookLight", HttpWebHookLightBulbAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookThermostat", HttpWebHookThermostatAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookOutlet", HttpWebHookOutletAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookSecurity", HttpWebHookSecurityAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookGarageDoorOpener", HttpWebHookGarageDoorOpenerAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookStatelessSwitch", HttpWebHookStatelessSwitchAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookLockMechanism", HttpWebHookLockMechanismAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookWindowCovering", HttpWebHookWindowCoveringAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookFanv2", HttpWebHookFanv2Accessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookCarbonDioxideSensor", HttpWebHookCarbonDioxideSensoryAccessory);
+  homebridge.registerAccessory("homebridge-http-webhooks-plus", "HttpWebHookValve", HttpWebHookValveAccessory);
 };
