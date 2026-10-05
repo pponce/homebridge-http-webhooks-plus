@@ -1,3 +1,9 @@
+## 0.3.1
+
+- Expose garage/lock state, startup, notification and HTTP bounds in the explicit Homebridge settings form, grouped per accessory.
+- Expose shared state API authentication and legacy response mode in platform settings, with scope and default explanations.
+- Runtime behavior and dependencies are unchanged from 0.3.0.
+
 ## 0.3.0
 
 - Add generic garage/lock optimistic/external modes and garage external_state alias.

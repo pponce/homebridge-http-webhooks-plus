@@ -6,6 +6,28 @@ characteristic UUIDs are unchanged. Node 18 or newer is required.
 
 ## Configuration
 
+In Homebridge UI (0.3.1+), open the plugin Settings, then Webhook Devices and
+the individual garage or lock entry. State and feedback, Notifications, and
+Advanced HTTP settings apply separately to that entry. The shared token is under
+Webhook Settings > Incoming state API; legacy response mode is under
+Compatibility. The token protects this platform’s shared API, not a single
+accessory. No state API is enabled for other families in this release.
+
+One server has a device-specific URL for each accessory ID: clients POST to
+`/v1/accessories/{percent-encoded-id}/state`. Multiple clients can use these
+endpoints with the shared token, but separate per-client/per-device tokens are
+not supported. The token grants access across the supported accessories; it does
+not restrict a client to the ID it normally uses. Device command URLs (open,
+close, etc.) are outgoing requests with their own per-command headers. The state
+API token is never automatically attached to those outgoing requests.
+
+The form displays saved values and schema defaults. State source and Startup
+state may remain unset to preserve their contextual defaults described below;
+opening the form must not change an external_state-only garage to optimistic.
+Defaults need not appear in config.json until explicitly saved. Existing
+integrations may guard configuration and require a coordinated settings update.
+
+
 Add a randomly generated `state_api_token` (32–256 URL-safe letters, digits,
 underscores or hyphens) to the platform to enable `/v1/` routes. Send it as the
 `X-Webhooks-Token` header, never in a URL. If Basic authentication is configured,

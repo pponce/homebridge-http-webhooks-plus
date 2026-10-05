@@ -725,7 +725,7 @@
                 "optimistic",
                 "external"
               ],
-              "description": "Optimistic assumes accepted commands completed. External changes current state only on feedback. Omit to retain optimistic behavior (or the garage external_state alias)."
+              "description": "Optimistic assumes completion after HTTP command success; external waits for feedback for current state. Applies only to this accessory. If omitted, defaults to optimistic unless the legacy external_state option is true."
             },
             "startup_state_policy": {
               "title": "Startup state",
@@ -734,7 +734,7 @@
                 "await_feedback",
                 "use_cache"
               ],
-              "description": "Omit for contextual defaults: external waits for fresh feedback; optimistic uses cache/defaults. Cached values are unverified."
+              "description": "Applies only to this accessory. If omitted: external waits for fresh feedback, optimistic uses cache/defaults. Waiting may appear as Updating or No Response in Home until feedback arrives. Cached values are unverified."
             },
             "notification_policy": {
               "title": "Explicit notifications",
@@ -1090,7 +1090,7 @@
                 "optimistic",
                 "external"
               ],
-              "description": "Optimistic assumes accepted commands completed. External changes current state only on feedback. Omit to retain optimistic behavior (or the garage external_state alias)."
+              "description": "Optimistic assumes completion after HTTP command success; external waits for feedback for current state. Applies only to this accessory. If omitted, defaults to optimistic."
             },
             "startup_state_policy": {
               "title": "Startup state",
@@ -1099,7 +1099,7 @@
                 "await_feedback",
                 "use_cache"
               ],
-              "description": "Omit for contextual defaults: external waits for fresh feedback; optimistic uses cache/defaults. Cached values are unverified."
+              "description": "Applies only to this accessory. If omitted: external waits for fresh feedback, optimistic uses cache/defaults. Waiting may appear as Updating or No Response in Home until feedback arrives. Cached values are unverified."
             },
             "notification_policy": {
               "title": "Explicit notifications",
@@ -1481,7 +1481,7 @@
         "minLength": 32,
         "maxLength": 256,
         "pattern": "^[A-Za-z0-9_-]+$",
-        "description": "Optional: enables the authenticated v1 garage/lock API. Generate a random token; clients send X-Webhooks-Token. Existing Basic authentication still applies.",
+        "description": "Optional shared credential for clients sending state reports INTO this platform\u2019s HTTP server. Currently grants access to all garage/lock state endpoints on this platform; the accessory ID in the URL selects the device. It is not sent to device command URLs. Generate 32\u2013256 random URL-safe characters. Clients send X-Webhooks-Token; existing Basic authentication also applies. Leave unchanged when an integration uses it.",
         "format": "password"
       },
       "webhook_response_mode": {
@@ -1492,7 +1492,7 @@
           "applied"
         ],
         "default": "legacy",
-        "description": "Legacy returns previous values. Applied returns typed resulting garage/lock state and notification outcomes. Other families are unchanged."
+        "description": "Default: legacy, for existing clients. Legacy returns previous values; applied returns typed resulting garage/lock state and notification outcomes. This choice does not affect v1 API responses or other accessory families."
       }
     }
   },
@@ -1516,6 +1516,24 @@
             "https",
             "https_keyfile",
             "https_certfile"
+          ]
+        },
+        {
+          "type": "section",
+          "title": "Incoming state API",
+          "expandable": true,
+          "expanded": true,
+          "items": [
+            "state_api_token"
+          ]
+        },
+        {
+          "type": "section",
+          "title": "Compatibility",
+          "expandable": true,
+          "expanded": false,
+          "items": [
+            "webhook_response_mode"
           ]
         }
       ]
@@ -1749,6 +1767,36 @@
               "items": [
                 "garagedooropeners[].id",
                 "garagedooropeners[].name",
+                {
+                  "type": "section",
+                  "title": "State and feedback",
+                  "expandable": true,
+                  "expanded": true,
+                  "items": [
+                    "garagedooropeners[].state_mode",
+                    "garagedooropeners[].startup_state_policy"
+                  ]
+                },
+                {
+                  "type": "section",
+                  "title": "Notifications",
+                  "expandable": true,
+                  "expanded": true,
+                  "items": [
+                    "garagedooropeners[].notification_policy",
+                    "garagedooropeners[].notification_min_interval_ms"
+                  ]
+                },
+                {
+                  "type": "section",
+                  "title": "Advanced HTTP settings",
+                  "expandable": true,
+                  "expanded": false,
+                  "items": [
+                    "garagedooropeners[].request_timeout_ms",
+                    "garagedooropeners[].response_max_bytes"
+                  ]
+                },
                 "garagedooropeners[].rejectUnauthorized",
                 "garagedooropeners[].open_url",
                 "garagedooropeners[].open_method",
@@ -1860,6 +1908,36 @@
               "items": [
                 "lockmechanisms[].id",
                 "lockmechanisms[].name",
+                {
+                  "type": "section",
+                  "title": "State and feedback",
+                  "expandable": true,
+                  "expanded": true,
+                  "items": [
+                    "lockmechanisms[].state_mode",
+                    "lockmechanisms[].startup_state_policy"
+                  ]
+                },
+                {
+                  "type": "section",
+                  "title": "Notifications",
+                  "expandable": true,
+                  "expanded": true,
+                  "items": [
+                    "lockmechanisms[].notification_policy",
+                    "lockmechanisms[].notification_min_interval_ms"
+                  ]
+                },
+                {
+                  "type": "section",
+                  "title": "Advanced HTTP settings",
+                  "expandable": true,
+                  "expanded": false,
+                  "items": [
+                    "lockmechanisms[].request_timeout_ms",
+                    "lockmechanisms[].response_max_bytes"
+                  ]
+                },
                 "lockmechanisms[].rejectUnauthorized",
                 "lockmechanisms[].open_url",
                 "lockmechanisms[].open_method",
