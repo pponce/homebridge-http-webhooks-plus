@@ -1,6 +1,6 @@
 {
   "name": "homebridge-http-webhooks-plus",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "displayName": "Homebridge HTTP Webhooks Plus",
   "description": "HTTP webhooks and virtual accessories for Homebridge; independently maintained fork of homebridge-http-webhooks.",
   "license": "GPL-3.0",

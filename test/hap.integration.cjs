@@ -30,3 +30,24 @@ for(const moduleName of variants){
   assert.equal(await b.characteristics.currentState.handleGetRequest(),1);
  });
 }
+
+for (const moduleName of variants) for (const Kind of [Garage, Lock]) {
+ test(moduleName+' '+Kind.name+' expires and recovers actual HAP reads without SET events', async t => {
+  const hap=require(moduleName), dir=fs.mkdtempSync(path.join(os.tmpdir(),'webhooks-freshness-'));
+  t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const storage=require('node-persist').create({dir:path.join(dir,'storage')});storage.initSync();
+  const a=new Kind(hap.Service,hap.Characteristic,{storage,cacheDirectory:path.join(dir,'storage'),log:{}},
+   {id:'freshness',name:'Freshness',state_mode:'external',feedback_timeout_seconds:0.03,
+    ...(Kind===Garage?{obstruction_monitoring:true,obstruction_timeout_seconds:0.03}:{})});
+  t.after(()=>a.close());let writes=0;a.characteristics.targetState.on('set',()=>{writes++;});
+  a.apply({currentState:1,...(Kind===Garage?{obstruction:false}:{})});
+  assert.equal(await a.characteristics.currentState.handleGetRequest(),1);
+  await new Promise(resolve=>setTimeout(resolve,70));
+  await assert.rejects(a.characteristics.currentState.handleGetRequest());
+  if(Kind===Garage) await assert.rejects(a.characteristics.obstruction.handleGetRequest());
+  a.apply({currentState:0,...(Kind===Garage?{obstruction:false}:{})});
+  assert.equal(await a.characteristics.currentState.handleGetRequest(),0);
+  if(Kind===Garage) assert.equal(await a.characteristics.obstruction.handleGetRequest(),false);
+  assert.equal(writes,0);
+ });
+}

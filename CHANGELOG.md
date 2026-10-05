@@ -1,3 +1,11 @@
+## 0.4.0
+
+- Add opt-in per-accessory current-state feedback expiry for garages and locks, with monotonic deadlines and communication-error recovery.
+- Add independent garage obstruction monitoring and expiry; missing reports never imply clear.
+- Commands, capability/status reads and invalid updates do not renew observation freshness. Both legacy webhooks and v1 reports support the new options.
+- Stop freshness timers on shutdown/storage failure; retain cached diagnostic values without presenting stale state as available.
+- Expose settings in the configuration UI and expand standalone README guidance. Defaults keep expiry disabled and obstruction monitoring off.
+
 ## 0.3.2
 
 - Fix garage/lock settings layout: bind all per-device fields and collapsible groups to one array-item template so existing configured accessories appear together.

@@ -49,7 +49,7 @@ Garage `external_state: true/false` is a migration alias for external/optimistic
 If both settings are supplied they must agree. Locks use `state_mode` directly.
 The required garage obstruction characteristic remains present, defaults to
 false for virtual use, and can be explicitly set/cleared. Locks have no obstruction.
-Separate obstruction monitoring and stale-feedback timers are not in 0.3.0.
+Separate obstruction monitoring and stale-feedback timers are introduced in 0.4.0; they are absent from 0.3.x.
 
 Example platform fragment (fill the token privately; do not publish it):
 
@@ -161,3 +161,25 @@ methods, URLs, body sizes and bounds are checked at startup without exposing
 secret values. TLS verification stays on unless `rejectUnauthorized: false`.
 These command paths use Node's bounded HTTP transport and do not redirect.
 Other families still use the older shared transport in this release.
+
+
+## Feedback freshness (0.4.0)
+
+Per accessory `feedback_timeout_seconds` is 0 by default (disabled), or a finite
+number up to 604800 seconds. Only successful current-state reports renew it.
+A successful optimistic command may store assumed state but cannot renew or
+recover expired feedback. Requests with any invalid field do not renew any timer.
+Garage-only `obstruction_monitoring` defaults false; when true obstruction starts
+unavailable even with use_cache. `obstruction_timeout_seconds` is independently
+0 (disabled) through 604800 and a positive value requires monitoring. A valid
+obstruction report alone renews that timer. Both legacy and v1 reports qualify.
+
+Availability adds `stale`; stored state and observation timestamps remain intact.
+Getters/characteristics report communication errors until fresh reports arrive.
+The plugin never invents physical position or obstruction from timeouts. Status
+capabilities add `feedbackFreshness`, `feedbackTimeoutSeconds`,
+`obstructionMonitoring` and `obstructionTimeoutSeconds`. Status reads never renew
+freshness. Runtime deadlines use a monotonic clock; persisted wall-clock timestamps
+are diagnostic only. With use_cache and a timeout, startup grants one unverified
+grace period. With await_feedback, current state stays unavailable until reported.
+Timers stop on shutdown and persistence failure. Transitions are logged once.

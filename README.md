@@ -1,16 +1,8 @@
-## Native garage and lock state (0.3.0)
-
-Configurable optimistic/external state, authenticated applied-state feedback,
-explicit notifications, safe startup choices and coherent persistent state are
-available for garages and locks. See [State API v1](docs/STATE_API.md) and
-[compatibility and upgrade notes](docs/COMPATIBILITY.md). These features are
-independent of any controller or hardware. Node 18+ is required.
-
 # homebridge-http-webhooks-plus
 
 Independent fork of [benzman81/homebridge-http-webhooks](https://github.com/benzman81/homebridge-http-webhooks), published as **homebridge-http-webhooks-plus**. The original GPL-3.0 license and attribution are retained.
 
-**Version 0.2.1 preserves upstream 0.2.0 accessory behavior and configuration.** Only package registration and release metadata change; configurable enhancements will follow in later releases. It works with any compatible HTTP client and has no dependency on a custom controller.
+**Version 0.2.1 was the upstream-compatible package rename. Version 0.3 adds native garage/lock state controls; 0.4 adds optional feedback expiry.** It works with any compatible HTTP client and has no dependency on a custom controller.
 
 **Already using the original package?** Read [migration and HomeKit compatibility](docs/COMPATIBILITY.md) before replacing it. Keep `"platform": "HttpWebHooks"`, existing accessory IDs/names and bridge pairing. Do not install both plugins together. Locally applied patches need separate preservation during this initial release.
 
@@ -19,6 +11,89 @@ A http plugin with support of webhooks for [Homebridge](https://github.com/nfari
 The plugin gets its states from any system that is calling the url to trigger a state change.
 
 Currently supports contact, motion, occupancy, smoke sensors, switches, push buttons, lights (only on/off and brightness), temperature sensors, humidity sensors, thermostats, CO2 sensors and leak sensors.
+
+## Garage and lock state controls
+
+These features are per accessory: each garage or lock can have its own state,
+startup and notification policies. They work through both the original webhook
+URLs and the optional v1 JSON API. No custom controller is required. Other
+accessory types have their own existing behavior; these options do not apply to
+them. Node 18+ is required.
+
+In Homebridge Settings, expand **Webhook Devices**, then **Garage Door Openers**
+or **Lock Mechanisms**, and open the existing device's settings.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `state_mode` | `optimistic` | Assume completion after HTTP command success, or choose `external` to wait for a reported current state. HTTP acceptance is not physical position. |
+| `startup_state_policy` | `use_cache` for optimistic; `await_feedback` for external | Use unverified cached/default state, or wait for new reports. A blank/None UI selection means the option is omitted and the contextual default applies. |
+| `notification_policy` | `changes_only` | `allow_explicit` also lets clients reaffirm unchanged values, without repeating commands. |
+| `notification_min_interval_ms` | `1000` | Limit repeated identical explicit events, 100–60000 ms. Ordinary changes still propagate. |
+| `request_timeout_ms` | `10000` | Bound each outgoing garage/lock command, including response reading. |
+| `response_max_bytes` | `65536` | Bound the outgoing command's response body. |
+| `feedback_timeout_seconds` (0.4.0) | `0` | Disable expiry, or expire current-state feedback after this many seconds. |
+| `obstruction_monitoring` (garage, next release) | `false` | Require independent obstruction reports; start unavailable until one arrives. |
+| `obstruction_timeout_seconds` (garage, next release) | `0` | With monitoring enabled, optionally expire obstruction feedback independently. |
+
+Use optimistic mode for intentional virtual devices. Use external mode when a
+sensor or integration reports state. The legacy garage `external_state` alias is
+still supported; if also specifying `state_mode`, both must agree.
+
+### Using the original webhook URLs
+
+No State API token is needed for these routes. Existing Basic authentication, if
+configured, still applies. For a garage with ID `sample-garage`, report closed:
+
+```text
+http://HOST:PORT/?accessoryId=sample-garage&currentdoorstate=1&targetdoorstate=1
+```
+
+With `notification_policy: "allow_explicit"`, append `&force_notify=true` to
+request another event even if the values have not changed. To report a lock,
+use `lockcurrentstate` and `locktargetstate`. For garage obstruction, use
+`obstructiondetected=true` or `false`; zero and false are valid updates.
+Current and target can differ. Reports never invoke the outgoing command URLs.
+
+### Optional JSON state API
+
+Set **Webhook Settings → Incoming state API → Token** to enable v1 routes.
+This shared credential grants access to all supported garages/locks on that
+platform. The accessory ID in the URL selects the device; this is not per-device
+access control. Multiple clients can share this server. Send `X-Webhooks-Token`
+and any configured Basic authentication. This token is never automatically sent
+to the per-action outgoing command URLs.
+
+`GET /v1/accessories/sample-garage` reads capabilities and status.
+`POST /v1/accessories/sample-garage/state` accepts JSON such as:
+
+```json
+{"currentState": 1, "targetState": 1, "notify": true}
+```
+
+The v1 response always describes applied state and notification outcomes.
+**Compatibility → Legacy webhook response format** defaults to `legacy` and
+controls only original garage/lock routes. Choose `applied` there if a legacy
+client needs the richer response; it does not enable or disable state features.
+An event acknowledgement is not proof of delivery to a particular phone.
+
+### Missing and stale feedback (0.4.0)
+
+Choose a timeout longer than the integration's report interval plus expected
+network delays. Valid current-state reports, even unchanged ones, renew only
+current-state freshness. Target commands, HTTP success, GETs and invalid reports
+do not. Obstruction requires its own reports; a door heartbeat is not evidence
+that an old obstruction flag remains current.
+
+Unavailable reads return HomeKit communication errors. Home may show Updating
+or No Response; garages have no Unknown enum, and Stopped is not a substitute
+for unavailable position. Stored values are retained for diagnostics but are
+not available readings. Fresh valid reports restore availability without motor
+commands. `use_cache` gives unverified cached/default current state a startup
+grace interval when a timeout is enabled; persisted timestamps never establish
+freshness after restart. Monitored obstruction always awaits its own first report.
+
+See [State API details](docs/STATE_API.md) for values, bounds, errors and storage,
+and [compatibility](docs/COMPATIBILITY.md) before upgrading or downgrading.
 
 # Installation
 1. Install homebridge using: `npm install -g homebridge`

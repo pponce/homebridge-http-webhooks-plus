@@ -777,6 +777,28 @@
               "title": "Legacy external-state alias",
               "type": "boolean",
               "description": "Migration alias for state_mode. If both are specified, they must agree."
+            },
+            "feedback_timeout_seconds": {
+              "title": "Feedback timeout (seconds)",
+              "type": "number",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 604800,
+              "description": "0 disables expiry. Otherwise only a valid current-state report renews freshness. Commands and status reads do not. Choose longer than the reporting interval plus network delay. Works with legacy webhooks and v1."
+            },
+            "obstruction_monitoring": {
+              "title": "Monitor obstruction feedback",
+              "type": "boolean",
+              "default": false,
+              "description": "Requires a real source reporting blocked and clear. Starts unavailable until its first report, independently of door state. Does not remove the required HomeKit characteristic when disabled."
+            },
+            "obstruction_timeout_seconds": {
+              "title": "Obstruction timeout (seconds)",
+              "type": "number",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 604800,
+              "description": "Requires obstruction monitoring. 0 disables expiry after the first report. Only obstruction reports renew this timer; door-state heartbeats do not."
             }
           }
         }
@@ -1137,6 +1159,14 @@
               "maximum": 1048576,
               "default": 65536,
               "description": "Stop reading a larger response and report failure; do not retry."
+            },
+            "feedback_timeout_seconds": {
+              "title": "Feedback timeout (seconds)",
+              "type": "number",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 604800,
+              "description": "0 disables expiry. Otherwise only a valid current-state report renews freshness. Commands and status reads do not. Choose longer than the reporting interval plus network delay. Works with legacy webhooks and v1."
             }
           }
         }
@@ -1772,7 +1802,8 @@
                       "expanded": true,
                       "items": [
                         "garagedooropeners[].state_mode",
-                        "garagedooropeners[].startup_state_policy"
+                        "garagedooropeners[].startup_state_policy",
+                        "garagedooropeners[].feedback_timeout_seconds"
                       ]
                     },
                     {
@@ -1783,6 +1814,16 @@
                       "items": [
                         "garagedooropeners[].notification_policy",
                         "garagedooropeners[].notification_min_interval_ms"
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "title": "Obstruction feedback",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        "garagedooropeners[].obstruction_monitoring",
+                        "garagedooropeners[].obstruction_timeout_seconds"
                       ]
                     },
                     {
@@ -1921,7 +1962,8 @@
                       "expanded": true,
                       "items": [
                         "lockmechanisms[].state_mode",
-                        "lockmechanisms[].startup_state_policy"
+                        "lockmechanisms[].startup_state_policy",
+                        "lockmechanisms[].feedback_timeout_seconds"
                       ]
                     },
                     {

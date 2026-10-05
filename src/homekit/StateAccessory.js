@@ -38,6 +38,15 @@ class StateAccessory {
     this.startup = choice(config.startup_state_policy, this.mode === 'external' ? 'await_feedback' : 'use_cache', ['await_feedback', 'use_cache'], 'startup_state_policy');
     this.policy = choice(config.notification_policy, 'changes_only', ['changes_only', 'allow_explicit'], 'notification_policy');
     this.interval = bounded(config.notification_min_interval_ms, 1000, 100, 60000, 'notification_min_interval_ms');
+    this.feedbackTimeout = bounded(config.feedback_timeout_seconds, 0, 0, 604800, 'feedback_timeout_seconds');
+    this.obstructionMonitoring = config.obstruction_monitoring === undefined ? false : config.obstruction_monitoring;
+    if (typeof this.obstructionMonitoring !== 'boolean' ||
+        (type !== 'garagedooropener' && (own(config, 'obstruction_monitoring') || own(config, 'obstruction_timeout_seconds')))) {
+      throw new StateError('invalid_config_obstruction_monitoring');
+    }
+    this.obstructionTimeout = bounded(config.obstruction_timeout_seconds, 0, 0, 604800, 'obstruction_timeout_seconds');
+    if (this.obstructionTimeout && !this.obstructionMonitoring) throw new StateError('obstruction_timeout_requires_monitoring');
+    this.deadlines = {}; this.timers = {}; this.closed = false;
     this.commands = {open: CommandRequest.configure(config, 'open'), close: CommandRequest.configure(config, 'close')};
     this.responseMode = platform.webhookResponseMode || 'legacy';
     this.store = new StateStore(platform.cacheDirectory || Constants.DEFAULT_CACHE_DIR, type, String(this.id));
@@ -52,7 +61,7 @@ class StateAccessory {
       const timestamp = saved ? saved.observedAt[field] : null;
       if (timestamp !== null && (!Number.isSafeInteger(timestamp) || timestamp < 0)) throw new StateError('invalid_state_snapshot', 503);
       this.observedAt[field] = timestamp;
-      this.available[field] = field === 'obstruction' || this.startup === 'use_cache';
+      this.available[field] = field === 'obstruction' ? !this.obstructionMonitoring : this.startup === 'use_cache';
       this.source[field] = value === undefined ? 'default' : 'unverified_cache';
     }
     this.informationService = new Service.AccessoryInformation();
@@ -68,35 +77,82 @@ class StateAccessory {
       characteristic.updateValue(this.available[field] ? this.values[field] : unavailable());
     }
     this.characteristics.targetState.on('set', this.command.bind(this));
+    for (const field of Object.keys(this.fields)) if (this.available[field]) this.renew(field);
+  }
+  now() { return Number(process.hrtime.bigint() / 1000000n); }
+  timeout(field) {
+    return field === 'currentState' ? this.feedbackTimeout :
+      field === 'obstruction' && this.obstructionMonitoring ? this.obstructionTimeout : 0;
+  }
+  reason(field) {
+    if (this.storageFailed) return 'storage_error';
+    if (this.deadlines[field] !== undefined && this.now() >= this.deadlines[field]) return 'stale';
+    return !this.available[field] ? 'awaiting_feedback' : this.source[field];
+  }
+  usable(field) { return !['storage_error', 'stale', 'awaiting_feedback'].includes(this.reason(field)); }
+  renew(field) {
+    clearTimeout(this.timers[field]); delete this.timers[field];
+    const seconds = this.timeout(field);
+    if (!seconds || this.closed) return;
+    this.deadlines[field] = this.now() + seconds * 1000;
+    const expire = () => {
+      if (this.closed || this.storageFailed) return;
+      const remaining = this.deadlines[field] - this.now();
+      if (remaining > 0) { this.timers[field] = setTimeout(expire, Math.ceil(remaining)); this.timers[field].unref(); return; }
+      delete this.timers[field];
+      this.characteristics[field].updateValue(unavailable());
+      this.log.info?.('Feedback became stale (' + field + ').');
+    };
+    this.timers[field] = setTimeout(expire, Math.ceil(seconds * 1000));
+    this.timers[field].unref();
+  }
+  close() {
+    this.closed = true;
+    for (const timer of Object.values(this.timers)) clearTimeout(timer);
+    this.timers = {};
   }
   normalize(field, value) { return this.fields[field][3] === null ? boolean(value) : integer(value, this.fields[field][3]); }
   get(field, callback) {
-    if (this.storageFailed || !this.available[field]) callback(unavailable());
+    if (!this.usable(field)) callback(unavailable());
     else callback(null, this.values[field]);
   }
   getServices() { return [this.service, this.informationService]; }
   status() {
     const availability = {};
-    for (const field of Object.keys(this.fields)) availability[field] = this.storageFailed ? 'storage_error' : !this.available[field] ? 'awaiting_feedback' : this.source[field];
+    for (const field of Object.keys(this.fields)) availability[field] = this.reason(field);
     return {success: !this.storageFailed, apiVersion: 1, package: {name: pkg.name, version: pkg.version},
       accessoryId: String(this.id), type: this.type, state: {...this.values},
       observedAt: {...this.observedAt}, availability,
       capabilities: {stateMode: this.mode, startupStatePolicy: this.startup, notificationPolicy: this.policy,
+        feedbackTimeoutSeconds: this.feedbackTimeout, obstructionMonitoring: this.obstructionMonitoring,
+        obstructionTimeoutSeconds: this.obstructionTimeout, feedbackFreshness: true,
         notificationMinIntervalMs: this.interval, fields: Object.keys(this.fields), explicitNotifications: true,
         atomicUpdates: true, feedbackInvokesCommands: false}};
   }
   commit(patch, observed, source) {
+    if (this.closed) throw new StateError('accessory_closed', 503);
     if (this.storageFailed) throw new StateError('state_storage_unavailable', 503);
     const values = {...this.values, ...patch}, observedAt = {...this.observedAt};
     if (observed) for (const field of Object.keys(patch)) observedAt[field] = Date.now();
     try { this.store.write({schema: 1, values, observedAt}); }
     catch (_) {
+      for (const timer of Object.values(this.timers)) clearTimeout(timer);
+      this.timers = {};
       this.storageFailed = true;
       for (const characteristic of Object.values(this.characteristics)) characteristic.updateValue(unavailable());
       throw new StateError('state_storage_unavailable', 503);
     }
     this.values = values; this.observedAt = observedAt;
-    for (const field of Object.keys(patch)) { this.available[field] = true; this.source[field] = source; }
+    for (const field of Object.keys(patch)) {
+      // Commands may change assumed values, but never renew observation freshness.
+      const wasUnavailable = !this.usable(field);
+      this.available[field] = observed || (this.timeout(field) ? this.available[field] : true);
+      this.source[field] = source;
+      if (observed) {
+        this.renew(field);
+        if (wasUnavailable && this.timeout(field)) this.log.info?.('Feedback recovered (' + field + ').');
+      }
+    }
   }
   apply(input) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw new StateError('invalid_state_object');
@@ -107,7 +163,7 @@ class StateAccessory {
     }
     const notify = own(input, 'notify') ? boolean(input.notify) : false;
     if (!Object.keys(patch).length) throw new StateError('missing_state_fields');
-    const previous = {...this.values}, wasAvailable = {...this.available};
+    const previous = {...this.values}, wasAvailable = Object.fromEntries(Object.keys(this.fields).map(field => [field, this.usable(field)]));
     // Entire payload validated before persistence, timestamps or HAP changes.
     this.commit(patch, true, 'observed'); ++this.generation;
     const outcomes = {}, now = Number(process.hrtime.bigint() / 1000000n);
@@ -154,7 +210,7 @@ class StateAccessory {
           if (this.mode === 'optimistic' && (!error || this.type === 'lockmechanism')) {
             const current = error ? 3 : value;
             this.commit({currentState: current}, false, 'assumed');
-            this.characteristics.currentState.updateValue(current);
+            this.characteristics.currentState.updateValue(this.usable('currentState') ? current : unavailable());
           }
           done(error);
         } catch (failure) { done(failure); }

@@ -45,7 +45,8 @@ test('garage and lock array layouts bind one complete template to each configure
     assert.ok(item.items.includes(`${family}[].id`));
     assert.ok(item.items.includes(`${family}[].name`));
     assert.deepEqual(item.items.filter(x => typeof x === 'object').map(x => x.title),
-      ['State and feedback', 'Notifications', 'Advanced HTTP settings']);
+      family === 'garagedooropeners' ? ['State and feedback', 'Notifications', 'Obstruction feedback', 'Advanced HTTP settings'] :
+        ['State and feedback', 'Notifications', 'Advanced HTTP settings']);
     assert.ok(fields(item).every(path => path.startsWith(`${family}[].`)));
   }
 });

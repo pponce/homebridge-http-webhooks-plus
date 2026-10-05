@@ -188,6 +188,7 @@ Server.prototype.start = function() {
   this.listener.listen(this.webhookPort, this.webhookListenHost);
 };
 Server.prototype.close = function() {
+  for (const accessory of this.accessories || []) if (typeof accessory.close === 'function') accessory.close();
   if (this.listener) { this.listener.close(); if (this.listener.closeAllConnections) this.listener.closeAllConnections(); }
 };
 module.exports = Server;
