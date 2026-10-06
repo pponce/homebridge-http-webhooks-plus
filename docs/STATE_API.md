@@ -1,17 +1,19 @@
-# Garage and lock state API v1 (0.3.0)
+# Garage and lock state API
 
-The state API is optional and generic. It does not require a particular controller,
-actuator or sensor. Existing IDs, names, platform aliases, service types and
-characteristic UUIDs are unchanged. Node 18 or newer is required.
+Use the optional JSON state API to report garage-door and lock state, read status,
+and request HomeKit state notifications. This reference describes API v1 in
+HTTP Webhooks Plus 0.5.0. The original query-string webhooks remain available;
+both interfaces use the same per-accessory state settings. Node.js 18 or newer
+is required.
 
 ## Configuration
 
-In Homebridge UI (0.3.1+), open the plugin Settings, then Webhook Devices and
+In Homebridge UI, open the plugin Settings, then Webhook Devices and
 the individual garage or lock entry. State and feedback, Notifications, and
 Advanced HTTP settings apply separately to that entry. The shared token is under
 Webhook Settings > Incoming state API; legacy response mode is under
 Compatibility. The token protects this platform’s shared API, not a single
-accessory. No state API is enabled for other families in this release.
+accessory. The v1 routes support garage-door and lock accessories.
 
 One server has a device-specific URL for each accessory ID: clients POST to
 `/v1/accessories/{percent-encoded-id}/state`. Multiple clients can use these
@@ -21,11 +23,10 @@ not restrict a client to the ID it normally uses. Device command URLs (open,
 close, etc.) are outgoing requests with their own per-command headers. The state
 API token is never automatically attached to those outgoing requests.
 
-The form displays saved values and schema defaults. State source and Startup
-state may remain unset to preserve their contextual defaults described below;
-opening the form must not change an external_state-only garage to optimistic.
-Defaults need not appear in config.json until explicitly saved. Existing
-integrations may guard configuration and require a coordinated settings update.
+The form displays saved values and schema defaults. Leaving State source or
+Startup state unset uses the defaults described below. A garage configured with
+`external_state: true` uses external mode when `state_mode` is omitted. Defaults
+need not appear in config.json until explicitly saved.
 
 
 Add a randomly generated `state_api_token` (32–256 URL-safe letters, digits,
@@ -43,15 +44,18 @@ Garage and lock entries support these options:
 | `notification_policy` | `changes_only` | `allow_explicit` permits the client to request reaffirmation. |
 | `notification_min_interval_ms` | 1000 | 100–60000; per-field limit for repeated identical explicit events. Changes always propagate. |
 | `request_timeout_ms` | 10000 | 100–60000; total command deadline, including response reading. |
-| `response_max_bytes` | 65536 | 1024–1048576; command response body bound. |
+| `response_max_bytes` | 65536 | 1024–1048576; total command response body limit, including redirects. |
+| `max_redirects` | 0 | 0–5; follow this many same-origin redirects. 0 disables redirects. |
 
-Garage `external_state: true/false` is a migration alias for external/optimistic.
-If both settings are supplied they must agree. Locks use `state_mode` directly.
+Garage `external_state` is a boolean alternative to `state_mode`: `true` selects
+external mode and `false` selects optimistic mode. If both settings are supplied
+they must agree. Locks use `state_mode` directly.
 The required garage obstruction characteristic remains present, defaults to
 false for virtual use, and can be explicitly set/cleared. Locks have no obstruction.
-Separate obstruction monitoring and stale-feedback timers are introduced in 0.4.0; they are absent from 0.3.x.
+See [feedback freshness](#feedback-freshness) for optional state expiry and
+independent obstruction monitoring.
 
-Example platform fragment (fill the token privately; do not publish it):
+Example platform fragment (add your generated `state_api_token` to enable the API):
 
 ```json
 {
@@ -72,7 +76,9 @@ is a command; a webhook target update is a report and **never** calls a command
 URL. External command success means acceptance, not completion or physical
 position. Overlapping commands and reports supersede late optimistic results;
 a late SET whose target differs from the current target returns an error.
-There are no automatic command retries, redirects or timers that invent state.
+Commands are never automatically retried. Redirects are disabled unless
+`max_redirects` is configured. Feedback expiry marks state unavailable; it does
+not infer that an accessory has moved.
 
 ## Routes and values
 
@@ -126,10 +132,11 @@ Each garage/lock uses one validated in-memory snapshot, atomically persisted
 before characteristics are updated. On first use it imports the existing
 `http-webhook-*` state keys without deleting them. Subsequent snapshots live in
 **`<resolved cache_directory>.plus-state-v1/`**, a sibling of node-persist's cache.
-Back up both directories. This deliberate storage migration prevents partial
-multi-key writes and leaves unrelated accessories' storage untouched. Old keys
-are no longer updated for these two families: downgrading requires a reviewed
-state restore or fresh feedback, not blindly treating old keys as current.
+Back up both directories. Saving each snapshot as a single update prevents
+partial multi-field writes and leaves other accessories' storage untouched.
+The original garage and lock cache entries are no longer updated. After a
+downgrade, they can contain outdated values; restore an appropriate backup and
+obtain fresh state reports before relying on them.
 
 Persistence failure returns 503, marks getters unavailable and requires restart
 and storage repair; it never claims success. A failure after file rename is
@@ -140,10 +147,13 @@ back or misrepresented as uncommitted. Notification delivery is not transactiona
 All errors have bounded fixed codes, with no request/response/credential dump.
 Malformed input returns 400, authentication 401, missing route/accessory 404,
 wrong method 405, oversized body 413, wrong content type 415, storage/HAP failure
-503. Requests have a 10-second deadline; v1 bodies are limited to 8192 bytes,
-legacy ignored bodies to 65536. Headers are bounded by Node's HTTP server limits.
+503. Incoming requests default to a 10-second deadline, v1 bodies to an 8192-byte
+limit, and ignored query-string webhook bodies to a 65536-byte limit. Configure
+these with platform `webhook_timeout_ms`, `state_api_body_max_bytes`, and
+`webhook_body_max_bytes`; see [HTTP settings](../README.md#shared-http-and-logging-controls)
+for their ranges. Headers are bounded by Node's HTTP server limits.
 
-## Legacy compatibility
+## Original webhook compatibility
 
 Legacy `?accessoryId=...` garage/lock field names still work. By default their
 response retains previous values in `currentState`, `targetState`, `obstruction`
@@ -152,18 +162,19 @@ for supplied fields. Values are now normalized types. Setting platform
 routes. The v1 routes always return applied state. Other families retain their
 existing response contracts and runtime implementations.
 
-Legacy `force_notify=true` maps to explicit notification permission; legacy
+Query-string `force_notify=true` uses the same explicit notification policy; its
 `notified` is true only when every supplied field's explicit event was requested.
 Use v1 to distinguish disabled, partial and throttled outcomes.
 
-Garage/lock headers and forms are validated JSON objects with string values;
-methods, URLs, body sizes and bounds are checked at startup without exposing
-secret values. TLS verification stays on unless `rejectUnauthorized: false`.
-These command paths use Node's bounded HTTP transport and do not redirect.
-Other families still use the older shared transport in this release.
+Command headers are JSON objects with string values. Forms accept flat JSON
+objects with string, finite number, or boolean values. Methods, URLs, body sizes
+and limits are checked at startup without exposing secret values. TLS verification
+stays on unless `rejectUnauthorized: false`. All command accessory types use the
+same HTTP/HTTPS transport. Redirects are disabled by default; `max_redirects`
+allows up to five same-origin redirects.
 
 
-## Feedback freshness (0.4.0)
+## Feedback freshness
 
 Per accessory `feedback_timeout_seconds` is 0 by default (disabled), or a finite
 number up to 604800 seconds. Only successful current-state reports renew it.

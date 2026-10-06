@@ -1,117 +1,130 @@
-# Compatibility for 0.5.0
+# Upgrading to HTTP Webhooks Plus
 
-All accessory command paths now use Node's maintained HTTP/HTTPS transport.
-`request` and unused `http-auth` dependencies are removed. No automatic retries.
-Default deadline remains 10 seconds; response limit defaults 64 KiB. Redirects
-are now disabled for every family; opt into `max_redirects` (1–5) for same-origin
-redirects only. Cross-origin redirects and changed URL credentials are rejected.
-301/302 POST and 303 responses switch to GET; 307/308 preserve method/body.
-TLS verification remains on unless `rejectUnauthorized: false` is configured.
+This guide covers moving from `homebridge-http-webhooks` to
+`homebridge-http-webhooks-plus`, and updating an existing Plus installation.
+It describes compatibility with Plus 0.5.0. See the [changelog](../CHANGELOG.md)
+for individual releases and the [README](../README.md) for configuration examples.
 
-Raw strings and flat JSON form objects with string/number/boolean values are
-supported. Malformed configuration, nested/array form values, conflicting raw
-body/form, incomplete TLS file pairs and invalid limits fail early with fixed
-error codes. Legacy families continue sending payloads only for POST/PUT/PATCH.
-URL user-info Basic authentication and explicit Authorization headers remain
-supported. Legacy placeholder substitutions remain unchanged.
+## What stays the same
 
-Logging is configurable at platform and accessory level, with mandatory redaction
-and no HTTP payload dumps. Existing state transitions are concise; routine reads
-use debug. Debug cannot bypass Homebridge's own effective debug setting.
-Other families' state semantics are unchanged; garage/lock state features are
-not implicitly enabled for other accessory types. All aliases and identities
-remain unchanged. UI arrays retain one bound item per configured accessory.
+- The platform name remains `HttpWebHooks`.
+- Existing accessory aliases, IDs, names, and HomeKit service types are retained.
+- Existing webhook URLs and command URL placeholders continue to work.
+- Garage doors and locks use optimistic state updates by default: a successful
+  outgoing command updates the displayed current state.
+- External feedback, feedback expiry, explicit notifications, and the JSON state
+  API are optional. You can enable them after upgrading.
 
-Home can retain its previous display until it refreshes, even after the API and
-HAP reads report expired feedback. Reopening Home may be needed to observe
-unavailability; recovery can also take time. API expiry is not a promise of an
-immediate change on an already-open Home screen.
+Keep your existing platform configuration, accessory IDs and names, cache path,
+and main or child bridge identity. You do not need to remove accessories from
+Apple Home, clear cached accessories, or pair the bridge again for a standard
+upgrade using `"platform": "HttpWebHooks"`.
 
-# Compatibility for 0.3.0
+## Before upgrading
 
-The garage/lock native [state API](STATE_API.md) is opt-in. Optimistic mode and
-legacy previous-value responses remain defaults. State/cache correctness fixes,
-strict validation, duplicate-ID rejection and rejection of incomplete Basic
-authentication are unconditional. Node 18+ is required. Garage/lock command
-requests now have finite response limits and do not follow redirects.
+Use Node.js 18 or newer and a Homebridge version supported by the plugin:
+Homebridge 1.8.4 or later in the 1.x series, or a compatible 2.x version.
 
-Names, IDs, aliases, service types, characteristic UUIDs and existing Homebridge
-pairing/storage remain unchanged. The two state families import their legacy
-keys into atomic snapshots in a sibling cache directory; back up both as described
-in the API document. Review the deliberate downgrade implications there.
-Other accessory-family runtime files remain byte-identical to upstream 0.2.0.
-A source/package test cannot prove a particular Home's rooms or automations.
+Back up your Homebridge configuration, pairing data, and persistent storage with
+your usual backup method. Include the plugin's `cache_directory` if it is stored
+separately. For an existing Plus installation, also include its sibling
+`<resolved cache_directory>.plus-state-v1/` directory.
 
-# Migrating to HTTP Webhooks Plus 0.2.1
+Check the behavior changes below, particularly if command URLs redirect or
+webhook clients rely on permissive state-value parsing.
 
-This release republishes the upstream 0.2.0 implementation under the independent
-package name `homebridge-http-webhooks-plus`. All `src/` files, the configuration
-schema, runtime dependencies and declared runtime requirements are unchanged.
-The package name passed to Homebridge registration is updated; the platform and
-accessory aliases are preserved. No new state modes or feedback API ship in 0.2.1.
+### Package-qualified configuration
 
-## Existing HomeKit accessories
+Most installations use the unqualified `"platform": "HttpWebHooks"` identifier.
+If yours uses `homebridge-http-webhooks.HttpWebHooks`, the package prefix can
+contribute to Homebridge's accessory identity. Review how to preserve that
+identity before changing the prefix. The same applies to package-qualified
+standalone accessory aliases. A search-and-replace of the package name across
+configuration and persistent storage can recreate accessories.
 
-Keep the existing `"platform": "HttpWebHooks"` configuration and every configured
-accessory ID and name. Preserve the existing main/child bridge username, pairing,
-port, persistent storage, service types and accessory configuration. Do not remove
-the bridge or accessories in Apple Home, recreate the platform, clear cached
-accessories or reset pairing as part of this package replacement.
+## Replace the original package
 
-Homebridge's static-platform UUID construction uses the configured platform
-identifier and the accessory UUID base/name. With the existing unqualified
-`HttpWebHooks` identifier and unchanged configuration, this release preserves
-those inputs and the complete accessory implementation. Package-registration
-tests and exact upstream runtime fingerprints protect this release boundary.
-The owner's actual HomeKit rooms, scenes and automations still need checking
-after a backed-up migration; source checks cannot verify a particular Home.
+1. Save a backup and a copy of your existing plugin configuration.
+2. Replace `homebridge-http-webhooks` with `homebridge-http-webhooks-plus` using
+   Homebridge UI or the same package manager and installation location you use
+   for other Homebridge plugins. The packages share registration aliases, so
+   only one should be loaded when Homebridge starts.
+3. Retain the existing `HttpWebHooks` configuration and bridge identity. If your
+   Homebridge configuration has a `plugins` allowlist or `disabledPlugins` list,
+   update the relevant package entry to `homebridge-http-webhooks-plus`.
+4. Restart Homebridge and check the log for successful plugin and accessory loading.
+5. Confirm your accessories remain in their rooms, scenes, and automations.
+   Check a webhook update and a usual accessory action before enabling new options.
 
-A package-qualified identifier such as
-`homebridge-http-webhooks.HttpWebHooks` needs a separately reviewed migration:
-changing its prefix can change the UUID seed. The same caution applies to
-package-qualified standalone accessory identifiers. Do not blindly replace
-every occurrence of the old package name in configuration or persistent data.
+Installation locations differ between containers, packaged installations, and
+global npm. Install into the location used by the running Homebridge instance.
 
-## Package replacement
+If you already use Plus, update it through your existing plugin installation
+method and restart Homebridge. Keep the existing configuration and cache.
 
-1. Record the installed version and location, Node/Homebridge versions and any
-   locally modified source files. Make a private backup of the package, full
-   Homebridge configuration, persistent storage and pairing data.
-2. Stop integrations that issue commands or publish state, then stop Homebridge
-   using the service manager appropriate to your installation.
-3. Replace the old package with the pinned Plus version in the same Homebridge
-   plugin installation location. Do not load both packages together: their
-   platform and accessory aliases intentionally overlap.
-4. If top-level plugin allowlists or disabled-plugin lists are used, migrate
-   the package entry deliberately. Retain the platform/accessory configuration
-   and bridge identity. Check external tools for saved package paths or integrity
-   receipts before restarting them.
-5. Start Homebridge, verify the loaded package, and check that all existing
-   accessories remain in the same rooms and automations. Then resume dependent
-   integrations after their read-only readiness checks pass.
+## Behavior changes to review
 
-Installation directories vary between system packages, containers, global npm
-and development setups. Use the existing Homebridge installation method; a
-global npm command in an unrelated Node installation can affect the wrong copy.
+### HTTP commands
 
-## Locally patched installations
+All command accessories use Node.js HTTP/HTTPS requests with a default 10-second
+deadline and a 64 KiB response limit. Adjust `request_timeout_ms` and
+`response_max_bytes` per accessory when needed. Commands are never automatically
+retried.
 
-The public npm artifact contains generic upstream behavior. A locally patched
-installation needs its patches preserved separately during this first migration.
-Compare the exact original files and patched files, retain the installed hashes
-and backups, and adapt any deployment receipts or saved paths. Do not assume
-ordinary reinstalling retains changes made inside `node_modules`.
+Redirects are disabled by default. Set `max_redirects` to 1–5 to follow redirects
+within the same origin (scheme, host, and port). Cross-origin redirects and changes
+to URL credentials are rejected. A 301/302 redirect for POST, or a 303 response
+except for HEAD, changes the request to GET; 307/308 preserve its method and body.
 
-The package has no dependency on any particular controller or deployment script.
-Future configurable features will allow integrations to stop patching installed
-source. Integration-specific migration logic belongs to those integrations.
+Use either a raw body or a form for each command. Forms accept flat JSON objects
+with string, finite number, or boolean values. Nested objects and arrays are
+rejected. Existing accessory families that sent bodies only for POST, PUT, and
+PATCH retain that behavior. URL-based Basic authentication and explicit
+Authorization headers remain supported.
 
-## State behavior retained from upstream
+TLS certificate verification is enabled by default. The existing
+`rejectUnauthorized` setting controls verification for outgoing requests.
 
-`targetdoorstate` represents the requested final door state; `currentdoorstate`
-represents the reported state. Setting either through a webhook is a state update.
-An existing HomeKit command handler can also optimistically publish final state
-when its outgoing HTTP command succeeds. This first release preserves that
-behavior, including existing limitations; HTTP acceptance does not prove physical
-completion. Garage obstruction reporting is a separate characteristic and is
-not a lock feature. See the README for the existing webhook fields.
+### Configuration and state validation
+
+Incomplete Basic authentication credentials and TLS certificate/key pairs are
+rejected at startup. Invalid command settings and out-of-range limits are also
+reported as configuration errors. Supply both members of a pair or neither.
+
+Accessory IDs must be unique across all accessory types because incoming webhooks
+select an accessory by ID. Garage and lock state updates validate the entire
+request before applying changes. Invalid values are rejected; valid zero and
+false values are applied correctly. See [accepted state values](STATE_API.md#routes-and-values).
+
+### Garage and lock responses
+
+The original query-string webhooks remain available. By default, their garage and
+lock responses return the previous values of supplied fields. Values are
+normalized to their documented numeric or boolean types.
+
+Set platform `webhook_response_mode` to `applied` if your client should receive
+the resulting state instead. The optional JSON state API always returns applied
+state. Other accessory types keep their existing response formats.
+
+### State storage and downgrading
+
+Garage and lock accessories import existing cached state automatically on first
+use, then save state snapshots to `<resolved cache_directory>.plus-state-v1/`.
+The original cache entries are retained but are no longer updated for these two
+accessory types. Other accessory types keep their existing storage.
+
+An older plugin can therefore read outdated garage or lock values after a
+downgrade. Use your backup and arrange fresh state reports before relying on
+those values. Do not clear Homebridge pairing or accessory caches as a state
+storage repair. See [persistence details](STATE_API.md#persistence-and-errors).
+
+### Logging and Home display
+
+Platform and accessory `log_level` settings control verbosity. Credentials are
+redacted, and HTTP request/response bodies are not logged. Debug messages also
+require Homebridge's effective debug logging setting.
+
+When optional feedback expiry is enabled, HomeKit reads become unavailable until
+fresh feedback arrives. Apple Home can continue showing a cached value until it
+refreshes; an already-open screen may not update immediately. HTTP command success
+and cached state are not confirmation of physical movement.

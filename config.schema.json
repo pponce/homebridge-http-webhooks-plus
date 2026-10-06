@@ -2,8 +2,8 @@
   "pluginAlias": "HttpWebHooks",
   "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "A `http` plugin with support of webhooks for homebridge.\n\nThe plugin gets its states from any system that is calling the url to trigger a state change.\n\nCurrently supports `contact`, `motion`, `occupancy`, `smoke`, `switches`, `push buttons`, `doorbells`, `lights` (only on/off and brightness), `temperature`, `humidity`, `thermostats`, `co2sensors`, and `leak` sensors.",
-  "footerDisplay": "See the [HTTP Webhooks Plus README](https://github.com/pponce/homebridge-http-webhooks-plus#readme).",
+  "headerDisplay": "Connect HTTP devices and services to Apple Home. Incoming webhooks update accessory state, and HomeKit actions send requests to your configured URLs.\n\nConfigure devices below. Garage doors and locks also support optional external feedback, state notifications, and feedback expiry.",
+  "footerDisplay": "See the [README](https://github.com/pponce/homebridge-http-webhooks-plus#readme), [upgrade guide](https://github.com/pponce/homebridge-http-webhooks-plus/blob/master/docs/COMPATIBILITY.md), and [state API reference](https://github.com/pponce/homebridge-http-webhooks-plus/blob/master/docs/STATE_API.md).",
   "schema": {
     "type": "object",
     "properties": {
@@ -1041,7 +1041,7 @@
                 "optimistic",
                 "external"
               ],
-              "description": "Optimistic assumes completion after HTTP command success; external waits for feedback for current state. Applies only to this accessory. If omitted, defaults to optimistic unless the legacy external_state option is true."
+              "description": "Optimistic assumes completion after HTTP command success; external waits for feedback for current state. Applies only to this accessory. Defaults to optimistic unless external_state is true."
             },
             "startup_state_policy": {
               "title": "Startup state",
@@ -1079,7 +1079,7 @@
               "minimum": 100,
               "maximum": 60000,
               "default": 10000,
-              "description": "Total HTTP command deadline. Commands are never retried or redirected."
+              "description": "Total HTTP command deadline, including any configured redirects. Commands are never automatically retried."
             },
             "response_max_bytes": {
               "title": "Maximum command response bytes",
@@ -1090,9 +1090,9 @@
               "description": "Stop reading a larger response and report failure; do not retry."
             },
             "external_state": {
-              "title": "Legacy external-state alias",
+              "title": "External state (boolean option)",
               "type": "boolean",
-              "description": "Migration alias for state_mode. If both are specified, they must agree."
+              "description": "Alternative to state_mode: true selects external, false selects optimistic. If both options are specified, they must agree."
             },
             "feedback_timeout_seconds": {
               "title": "Feedback timeout (seconds)",
@@ -1577,7 +1577,7 @@
               "minimum": 100,
               "maximum": 60000,
               "default": 10000,
-              "description": "Total HTTP command deadline. Commands are never retried or redirected."
+              "description": "Total HTTP command deadline, including any configured redirects. Commands are never automatically retried."
             },
             "response_max_bytes": {
               "title": "Maximum command response bytes",

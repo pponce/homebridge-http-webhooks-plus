@@ -1,24 +1,34 @@
 # homebridge-http-webhooks-plus
 
-Independent fork of [benzman81/homebridge-http-webhooks](https://github.com/benzman81/homebridge-http-webhooks), published as **homebridge-http-webhooks-plus**. The original GPL-3.0 license and attribution are retained.
+Connect HTTP devices, services, and automations to Apple Home through
+[Homebridge](https://github.com/homebridge/homebridge). Incoming webhooks update
+accessory state; HomeKit actions can send HTTP requests to your configured URLs.
 
-**Version 0.2.1 was the upstream-compatible package rename. Version 0.3 adds native garage/lock state controls; 0.4 adds optional feedback expiry; 0.5 adds shared HTTP limits and redacted logging.** It works with any compatible HTTP client and has no dependency on a custom controller.
+HTTP Webhooks Plus extends [homebridge-http-webhooks](https://github.com/benzman81/homebridge-http-webhooks)
+with new features and reliability fixes:
 
-**Already using the original package?** Read [migration and HomeKit compatibility](docs/COMPATIBILITY.md) before replacing it. Keep `"platform": "HttpWebHooks"`, existing accessory IDs/names and bridge pairing. Do not install both plugins together. Locally applied patches need separate preservation during this initial release.
+- Garage and lock state options: update after a successful command or wait for reported feedback.
+- An optional JSON state API, explicit state notifications, and feedback expiry.
+- Configurable HTTP timeouts, response limits, and redirects.
+- Logging controls with credential redaction.
 
-A http plugin with support of webhooks for [Homebridge](https://github.com/nfarina/homebridge).
+Supported accessories include sensors, switches, push buttons, doorbells, lights
+(on/off and brightness), outlets, thermostats, security systems, garage doors,
+locks, window coverings, fans, and valves. Sensor types include contact, motion,
+occupancy, smoke, temperature, humidity, air quality, light level, CO2, and leaks.
 
-The plugin gets its states from any system that is calling the url to trigger a state change.
+**Upgrading from the original plugin?** Follow the [upgrade guide](docs/COMPATIBILITY.md)
+to keep your existing configuration and HomeKit accessories. New garage and lock
+state features are optional. See the [changelog](CHANGELOG.md) for release details.
 
-Currently supports contact, motion, occupancy, smoke sensors, switches, push buttons, lights (only on/off and brightness), temperature sensors, humidity sensors, thermostats, CO2 sensors and leak sensors.
+The original GPL-3.0 license and attribution are retained. Node.js 18 or newer is required.
 
 ## Garage and lock state controls
 
 These features are per accessory: each garage or lock can have its own state,
 startup and notification policies. They work through both the original webhook
-URLs and the optional v1 JSON API. No custom controller is required. Other
-accessory types have their own existing behavior; these options do not apply to
-them. Node 18+ is required.
+URLs and the optional v1 JSON API. Configure them separately for each garage or
+lock; other accessory types keep their existing state behavior.
 
 In Homebridge Settings, expand **Webhook Devices**, then **Garage Door Openers**
 or **Lock Mechanisms**, and open the existing device's settings.
@@ -31,13 +41,14 @@ or **Lock Mechanisms**, and open the existing device's settings.
 | `notification_min_interval_ms` | `1000` | Limit repeated identical explicit events, 100–60000 ms. Ordinary changes still propagate. |
 | `request_timeout_ms` | `10000` | Bound each outgoing garage/lock command, including response reading. |
 | `response_max_bytes` | `65536` | Bound the outgoing command's response body. |
-| `feedback_timeout_seconds` (0.4.0) | `0` | Disable expiry, or expire current-state feedback after this many seconds. |
-| `obstruction_monitoring` (garage, 0.4.0) | `false` | Require independent obstruction reports; start unavailable until one arrives. |
-| `obstruction_timeout_seconds` (garage, 0.4.0) | `0` | With monitoring enabled, optionally expire obstruction feedback independently. |
+| `feedback_timeout_seconds` | `0` | Disable expiry, or expire current-state feedback after this many seconds. |
+| `obstruction_monitoring` (garage) | `false` | Require independent obstruction reports; start unavailable until one arrives. |
+| `obstruction_timeout_seconds` (garage) | `0` | With monitoring enabled, optionally expire obstruction feedback independently. |
 
 Use optimistic mode for intentional virtual devices. Use external mode when a
-sensor or integration reports state. The legacy garage `external_state` alias is
-still supported; if also specifying `state_mode`, both must agree.
+sensor or integration reports state. Garage entries also accept `external_state`
+as a boolean alternative: `true` selects external mode and `false` selects
+optimistic mode. If also specifying `state_mode`, both must agree.
 
 ### Using the original webhook URLs
 
@@ -76,7 +87,7 @@ controls only original garage/lock routes. Choose `applied` there if a legacy
 client needs the richer response; it does not enable or disable state features.
 An event acknowledgement is not proof of delivery to a particular phone.
 
-### Missing and stale feedback (0.4.0)
+### Missing and stale feedback
 
 Choose a timeout longer than the integration's report interval plus expected
 network delays. Valid current-state reports, even unchanged ones, renew only
@@ -96,9 +107,15 @@ See [State API details](docs/STATE_API.md) for values, bounds, errors and storag
 and [compatibility](docs/COMPATIBILITY.md) before upgrading or downgrading.
 
 # Installation
-1. Install homebridge using: `npm install -g homebridge`
-2. Install this plugin using: `npm install -g homebridge-http-webhooks-plus`
-3. Update your configuration file. See sample-config.json snippet below.
+1. Install and set up [Homebridge](https://github.com/homebridge/homebridge).
+2. Search for **homebridge-http-webhooks-plus** in Homebridge UI and install it.
+   For an installation managed with global npm, use `npm install -g homebridge-http-webhooks-plus` in the same Node.js environment as Homebridge.
+3. Configure the plugin in Homebridge UI, or use the configuration example below.
+   Restart Homebridge to load your accessories.
+
+If you already use `homebridge-http-webhooks`, follow the [upgrade guide](docs/COMPATIBILITY.md)
+before installing Plus. The two packages use the same accessory aliases and must
+not run together.
 
 # Retrieve State
 To retrieve the current state, you need to call the url `http://yourHomebridgeServerIp:webhook_port/?accessoryId=theAccessoryIdToTrigger`
@@ -581,18 +598,21 @@ Example config.json:
 ```
 
 ## Cache Directory Storage (cache_directory)
-The cache directory is used to cache the state of the accessories. It must point to a **valid** and **empty** directory and the user that runs homebridge must have **write access**.
+The cache directory stores accessory state. For a new installation, use a dedicated
+directory that the Homebridge user can write to. When upgrading, keep the existing
+directory and its contents. Garage and lock snapshots also use a sibling directory
+named `<resolved cache_directory>.plus-state-v1/`; include both directories in backups.
 
 ## HTTPS
 If you want to create a secure connection for the webhooks you need to enable it by setting *https* to true. Then a self signed
 ssl certificate will be created automatically and a secure connection will be used. If you want to use your own generated ssl certificate you can do this by setting the values for *https_keyfile* and *https_certfile* to the corresponding file paths.
 
-## Shared HTTP and logging controls (0.5.0)
+## Shared HTTP and logging controls
 
 These reliability controls apply independently of the garage/lock state API.
-Every command accessory uses the same bounded Node HTTP/HTTPS transport. No
-integration or controller is required, and commands are never automatically
-retried. Existing accessories, IDs, cache keys and command placeholders remain.
+Every command accessory uses the same HTTP/HTTPS transport with configurable
+timeouts and response limits. Commands are never automatically retried. These
+settings keep existing command URLs and placeholder substitutions working.
 
 | Setting | Scope | Default / bounds |
 | --- | --- | --- |

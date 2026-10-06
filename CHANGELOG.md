@@ -1,3 +1,8 @@
+## Unreleased
+
+- Rewrite the README, upgrade guide, state API reference, and settings help around installation, configuration, and upgrading from the original HTTP Webhooks plugin.
+- Clarify cache backups, optional state settings, and current HTTP redirect and request-limit behavior.
+
 ## 0.5.0
 
 - Shared bounded core HTTP/HTTPS transport across command accessory families;
@@ -43,7 +48,7 @@
 - Publish the independent fork as `homebridge-http-webhooks-plus`.
 - Update package registration and repository links while retaining every existing platform/accessory alias.
 - Preserve upstream 0.2.0 runtime source, configuration schema, dependencies and state behavior.
-- Add compatibility checks, package CI and migration documentation. No new controller-specific behavior is included.
+- Add compatibility checks, package CI and an upgrade guide.
 
 ### 0.2.0
 - Added Homebridge v2 compytability (thanks to jsiegenthaler).
