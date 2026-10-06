@@ -4,14 +4,6 @@ Connect HTTP devices, services, and automations to Apple Home through
 [Homebridge](https://github.com/homebridge/homebridge). Incoming webhooks update
 accessory state; HomeKit actions can send HTTP requests to your configured URLs.
 
-HTTP Webhooks Plus extends [homebridge-http-webhooks](https://github.com/benzman81/homebridge-http-webhooks)
-with new features and reliability fixes:
-
-- Garage and lock state options: update after a successful command or wait for reported feedback.
-- An optional JSON state API, explicit state notifications, and feedback expiry.
-- Configurable HTTP timeouts, response limits, and redirects.
-- Logging controls with credential redaction.
-
 Supported accessories include sensors, switches, push buttons, doorbells, lights
 (on/off and brightness), outlets, thermostats, security systems, garage doors,
 locks, window coverings, fans, and valves. Sensor types include contact, motion,
@@ -22,6 +14,40 @@ to keep your existing configuration and HomeKit accessories. New garage and lock
 state features are optional. See the [changelog](CHANGELOG.md) for release details.
 
 The original GPL-3.0 license and attribution are retained. Node.js 18 or newer is required.
+
+## What does HTTP Webhooks Plus add?
+
+HTTP Webhooks Plus creates virtual HomeKit accessories whose state can be updated
+by webhooks and whose actions can call your configured URLs. It builds on the
+[original plugin](https://github.com/benzman81/homebridge-http-webhooks) with more
+control over state reporting, HTTP requests, and logging.
+
+Here's what changes compared with `homebridge-http-webhooks` 0.2.0:
+
+| Situation | Original plugin | HTTP Webhooks Plus |
+| --- | --- | --- |
+| **A garage or lock command succeeds** | Updates HomeKit to the requested state after HTTP success. | Adds optional **external state mode**, which waits for your integration to report the current state. Useful when accepting a command and completing the operation happen at different times. |
+| **Homebridge restarts** | Uses cached state, or defaults to closed/secured if none exists. | Lets each garage or lock wait for a new report before making its current state available. |
+| **An integration stops reporting** | Keeps returning the stored state without an expiry policy. | Can mark garage or lock feedback unavailable after a configurable timeout. Useful for integrations that send regular reports. |
+| **A command response arrives after newer feedback** | Its completion handler can overwrite the newer reported state. | Guards against outdated command completions replacing newer state. |
+| **The same state needs to be announced again** | Has no explicit option to resend unchanged garage or lock state as a HomeKit event. | Can send an explicitly requested event for an unchanged value, with limits on repeated events. |
+| **Garage obstruction feedback stops** | Keeps using the stored obstruction value. | Can require obstruction reports and expire them independently of door-position reports. |
+| **An HTTP endpoint responds slowly or sends excessive data** | Uses built-in request timeouts. | Adds configurable deadlines covering the complete command response, response-size limits, and controls for following redirects. |
+| **You need quieter or more useful logs** | Some request paths log URLs and request or response bodies. | Adds plugin and accessory log controls, credential redaction, and removes raw request/response dumps. |
+
+The garage and lock state options work through the **existing webhook URLs**.
+External state mode, feedback expiry, obstruction monitoring, and explicit repeat
+events are optional. Other accessory types retain their existing state behavior
+while benefiting from the applicable HTTP and logging improvements.
+
+An optional, token-protected **JSON State API** provides a consistent interface
+for reading garage and lock status, inspecting settings, and submitting updates.
+Existing webhook clients can also request richer update responses through the
+`applied` response setting.
+
+Your integration remains responsible for reporting accurate state and controlling
+the hardware. The plugin presents those reports to HomeKit and forwards configured
+actions.
 
 ## Garage and lock state controls
 
