@@ -117,7 +117,7 @@
     let options = reportOptions;
     container.replaceChildren();
     container.append(el('p', 'State reports update HomeKit without executing outgoing commands. Run action executes the same configured action as HomeKit. Button and doorbell reports can run Home automations.', 'notice'));
-    if (actionOptions.length) container.append(el('p', device.allow_external_actions === true ? 'External actions are enabled for this device. Commands use the listener’s existing authentication.' : 'To run commands, enable Allow external actions for this device, save settings and restart the child bridge.', 'field-help'));
+    if (actionOptions.length) container.append(el('p', device.allow_external_actions === true ? 'External actions are enabled for this device. Commands use the listener’s existing authentication.' : 'To run commands, enable Allow external actions for this device, save with Homebridge’s button and restart the child bridge.', 'field-help'));
     else container.append(el('p', 'This device reports sensor readings or events and has no outgoing commands. Use a Home automation to act on its reports.', 'field-help'));
     container.append(el('p', 'Examples use the current settings shown in this configuration. Save changes and restart the child bridge before using changed IDs or connection settings.', 'field-help'));
     const grid = el('div', undefined, 'field-grid api-controls');
@@ -210,11 +210,11 @@
       read.disabled = executing || !available || !platform.state_api_token;
       read.hidden = !jsonSupported;
       send.textContent = method.value === 'action' ? 'Run action' : ['doorbells','statelessswitches','pushbuttons'].includes(family) ? 'Send event' : 'Send state report';
-      const reason = method.value === 'action' && device.allow_external_actions !== true ? 'Run action is disabled. Enable Allow external actions in this device’s settings, save settings and restart the child bridge.' :
-        !settings.canExecute ? 'Save settings and restart the child bridge before testing changed settings.' :
+      const reason = method.value === 'action' && device.allow_external_actions !== true ? 'Run action is disabled. Enable Allow external actions in this device’s settings, save with Homebridge’s button and restart the child bridge.' :
+        !settings.canExecute ? 'Use Homebridge’s Save button and restart the child bridge before testing changed settings.' :
         !local ? 'Use this Homebridge instance’s detected IP address for in-page testing. Proxy URLs can be used from your external program.' :
         !valid ? 'Choose a valid request value before sending.' :
-        method.value === 'json' && !platform.state_api_token ? 'Configure an Incoming State API token, save settings and restart the child bridge.' : '';
+        method.value === 'json' && !platform.state_api_token ? 'Configure an Incoming State API token, save with Homebridge’s button and restart the child bridge.' : '';
       runReason.textContent = reason; runReason.hidden = !reason; send.title = reason; runner.title = reason;
     }
     async function copy(text, button) {

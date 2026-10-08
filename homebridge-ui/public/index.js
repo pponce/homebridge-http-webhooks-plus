@@ -2,7 +2,8 @@
   'use strict';
   const M = window.WebhooksConfig;
   const $ = id => document.getElementById(id);
-  let properties, blocks, baseline, activeIndex, editing, ready = false, saving = false;
+  let properties, blocks, baseline, activeIndex, editing, ready = false;
+  let syncRevision = 0, syncQueue = Promise.resolve(), lastStaged;
   let platformControls = [], deviceControls = [], apiTrigger, networkInfo, apiGeneration = 0;
   const config = () => blocks[activeIndex];
   const node = (tag, className, text) => {
@@ -25,9 +26,60 @@
   }
   function changed() {
     if (!ready) return;
-    $('save-status').textContent = 'Unsaved changes';
-    $('save-settings').disabled = saving;
     message('');
+    stageForSave();
+  }
+  function configurationIssue() {
+    if (platformControls.some(record => record.parseError)) return 'Correct the highlighted webhook settings before saving.';
+    for (const block of blocks) {
+      if (!M.isPlatform(block)) continue;
+      if (Object.keys(M.validate(block, properties, true)).length) return 'Correct invalid webhook settings before saving.';
+      for (const family of M.families(properties)) if (block[family] !== undefined && !Array.isArray(block[family])) return 'Repair the invalid device list before saving.';
+      for (const row of M.devices(block, properties)) {
+        if (!M.isObject(row.data) || Object.keys(M.validate(row.data, properties[row.family].items.properties)).length || M.duplicateId(block, properties, row.data, row)) {
+          return 'A configured device needs attention. Check required IDs, duplicate IDs and invalid settings before saving.';
+        }
+      }
+    }
+    return '';
+  }
+  function stageForSave() {
+    if (!ready) return;
+    const revision = ++syncRevision;
+    window.homebridge.disableSaveButton();
+    $('retry-stage').hidden = true;
+    $('save-status').textContent = 'Save is unavailable';
+    if (editing) {
+      $('save-hint').textContent = 'Apply changes or cancel this device edit to enable Homebridge’s Save button.';
+      return;
+    }
+    const issue = configurationIssue();
+    if (issue) {
+      validateControls(platformControls, config(), properties, true, false);
+      $('save-hint').textContent = issue;
+      return;
+    }
+    const snapshot = JSON.stringify(blocks);
+    $('save-status').textContent = 'Preparing Save…';
+    $('save-hint').textContent = 'Save will become available when your validated settings are staged.';
+    // Serialize updates so a slow older request cannot replace a newer draft.
+    syncQueue = syncQueue.then(async () => {
+      if (revision !== syncRevision) return;
+      if (snapshot !== lastStaged) {
+        await window.homebridge.updatePluginConfig(JSON.parse(snapshot));
+        lastStaged = snapshot;
+      }
+      if (revision !== syncRevision) return;
+      window.homebridge.enableSaveButton();
+      $('save-status').textContent = snapshot === baseline ? 'Settings ready' : 'Changes ready to save';
+      $('save-hint').textContent = 'Click Homebridge’s Save button below, then restart the child bridge. Closing without Save discards your changes.';
+    }).catch(() => {
+      if (revision !== syncRevision) return;
+      window.homebridge.disableSaveButton();
+      $('save-status').textContent = 'Could not prepare Save';
+      $('save-hint').textContent = 'Your edits are still here. Check the Homebridge connection and retry.';
+      $('retry-stage').hidden = false;
+    });
   }
   function theme() {
     const chosen = [...document.body.classList].some(name => /^config-ui-x-/.test(name));
@@ -230,7 +282,7 @@
     record.wrapper.scrollIntoView({block: 'center', behavior: 'smooth'});
     window.homebridge.fixScrollHeight();
   }
-  function validateControls(controls, target, schemas, platform) {
+  function validateControls(controls, target, schemas, platform, focus = true) {
     const errors = M.validate(target, schemas, platform);
     let first;
     for (const record of controls) {
@@ -238,7 +290,7 @@
       showFieldError(record, error);
       if (error && !first) first = record;
     }
-    if (first) focusError(first);
+    if (first && focus) focusError(first);
     return !first;
   }
   function renderPlatform() {
@@ -258,7 +310,7 @@
       select.value = activeIndex;
       select.addEventListener('change', () => {
         if (!validateControls(platformControls, config(), properties, true)) { select.value = activeIndex; return; }
-        activeIndex = Number(select.value); renderPlatform(); renderDevices();
+        activeIndex = Number(select.value); renderPlatform(); renderDevices(); stageForSave();
       });
       $('platform-picker').append(label, select);
     }
@@ -338,6 +390,7 @@
     const schemas = properties[family].items.properties;
     renderGroups($('device-fields'), M.deviceGroups(schemas), schemas, editing.data, deviceControls, 'device', () => { editing.modified = true; });
     message('');
+    stageForSave();
     $('editor-title').focus();
     window.homebridge.fixScrollHeight();
   }
@@ -350,6 +403,7 @@
     $('add-device').hidden = false;
     renderPlatform(); renderDevices();
     $('add-device').focus();
+    stageForSave();
   }
   function applyDevice(event) {
     event.preventDefault();
@@ -366,37 +420,6 @@
     blocks[activeIndex] = M.applyDevice(config(), editing.family, editing.index, editing.data);
     closeEditor(false); changed();
   }
-  async function save() {
-    if (!ready || saving || editing) return;
-    if (!validateControls(platformControls, config(), properties, true)) return;
-    // Validate every configured platform, including those not currently selected.
-    for (let index = 0; index < blocks.length; index++) {
-      const block = blocks[index];
-      if (!M.isPlatform(block)) continue;
-      let issue = Object.keys(M.validate(block, properties, true)).length > 0;
-      for (const family of M.families(properties)) if (block[family] !== undefined && !Array.isArray(block[family])) issue = true;
-      for (const row of M.devices(block, properties)) {
-        if (!M.isObject(row.data) || Object.keys(M.validate(row.data, properties[row.family].items.properties)).length || M.duplicateId(block, properties, row.data, row)) issue = true;
-      }
-      if (issue) { message('A configured device or platform needs attention. Check required IDs, duplicate IDs, and invalid settings before saving.', 'error'); return; }
-    }
-    saving = true;
-    $('save-settings').disabled = true;
-    $('save-status').textContent = 'Saving…';
-    window.homebridge.showSpinner();
-    try {
-      await window.homebridge.updatePluginConfig(M.clone(blocks));
-      await window.homebridge.savePluginConfig();
-      baseline = JSON.stringify(blocks);
-      $('save-status').textContent = 'All changes saved';
-      message('Settings saved. Restart the child bridge to apply your changes.', 'success');
-    } catch (_) {
-      // Never include transport errors, configuration values or credentials in UI logs.
-      $('save-status').textContent = 'Changes not saved';
-      $('save-settings').disabled = false;
-      message('Could not save settings. Your edits are still here. Check the Homebridge connection and try again.', 'error');
-    } finally { saving = false; window.homebridge.hideSpinner(); }
-  }
   let started = false;
   async function init() {
     if (started) return;
@@ -405,7 +428,7 @@
     new MutationObserver(theme).observe(document.body, {attributes: true, attributeFilter: ['class']});
     window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', theme);
     if (!window.homebridge) { message('Open this configuration page from the plugin’s Settings in Homebridge UI.', 'error'); return; }
-    // This UI owns validation and saving; the host's generic Save must not bypass it.
+    // Keep Homebridge Save disabled until the validated draft is staged.
     window.homebridge.disableSaveButton();
     window.homebridge.hideSchemaForm();
     try {
@@ -413,6 +436,7 @@
       if (!Array.isArray(loaded) || !schema?.schema?.properties) throw Error('Invalid response');
       properties = schema.schema.properties;
       blocks = M.clone(loaded);
+      lastStaged = JSON.stringify(loaded);
       activeIndex = blocks.findIndex(M.isPlatform);
       if (activeIndex < 0) { blocks.push({platform: 'HttpWebHooks'}); activeIndex = blocks.length - 1; }
       baseline = JSON.stringify(blocks);
@@ -423,6 +447,7 @@
       $('webhooks-app').setAttribute('aria-busy', 'false');
       ready = true;
       message('');
+      stageForSave();
     } catch (_) {
       message('Could not load your current configuration. Close and reopen Settings to try again.', 'error');
       return;
@@ -442,13 +467,8 @@
     });
     $('cancel-edit').addEventListener('click', () => closeEditor());
     $('device-form').addEventListener('submit', applyDevice);
-    $('platform-form').addEventListener('submit', event => { event.preventDefault(); save(); });
-    $('save-settings').addEventListener('click', save);
-    window.addEventListener('beforeunload', event => {
-      if (editing?.modified || JSON.stringify(blocks) !== baseline || platformControls.some(record => record.parseError)) {
-        event.preventDefault(); event.returnValue = '';
-      }
-    });
+    $('platform-form').addEventListener('submit', event => { event.preventDefault(); stageForSave(); });
+    $('retry-stage').addEventListener('click', stageForSave);
     if (window.ResizeObserver) new ResizeObserver(() => window.homebridge.fixScrollHeight()).observe($('webhooks-app'));
     window.homebridge.fixScrollHeight();
   }

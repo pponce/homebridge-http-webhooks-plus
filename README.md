@@ -72,8 +72,12 @@ with cards, teal accents, grouped fields, and Homebridge light/dark themes.
   configuration values, so save and restart before using changed settings.
 - **Webhook settings:** configure the listener, optional incoming State API,
   authentication, HTTPS, logging, and request limits.
-- **Save settings:** device edits are staged with **Apply changes**; this saves
-  all staged changes. Restart the child bridge afterward. The page retains
+- **Save:** device edits are staged with **Apply changes**; webhook settings
+  stage as you edit them. Use Homebridge’s bottom **Save** button to write all
+  staged changes, then restart the child bridge. The green checkmark means
+  settings are ready to save. Save is disabled while a device edit is open,
+  settings are invalid, or staging is in progress. A visible message explains
+  the reason; staging failures retain edits and offer a retry. The page retains
   untouched options and child-bridge metadata and reports failed saves without
   discarding your edits.
 
@@ -773,7 +777,7 @@ Neither the listener nor the reference page automatically retries a command.
 Set **Webhook Bearer token** in Webhook settings → Authentication and HTTPS to
 require authentication on incoming reports and actions for every accessory.
 Click **Generate token** to create a secure random 64-character token, then
-use **Show** to copy it into your external program. Save settings and restart
+use **Show** to copy it into your external program. Click Homebridge’s Save button and restart
 the child bridge to apply it. Existing tokens stay unchanged until you edit or
 generate a replacement. You can also enter a random 32–256 character token
 containing letters, numbers, underscores

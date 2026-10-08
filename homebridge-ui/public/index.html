@@ -23,14 +23,14 @@
       <div class="section-heading"><div><h2 id="settings-heading">Webhook settings</h2><p>Connection and security settings shared by these devices.</p></div><span class="pill">Platform</span></div>
       <form id="platform-form" novalidate><div id="platform-fields"></div></form>
     </section>
-    <footer class="save-bar"><div><strong id="save-status">Settings loaded</strong><p id="save-hint">Changes take effect after restarting the child bridge.</p></div><button id="save-settings" type="button" class="primary" disabled>Save settings</button></footer>
+    <footer class="save-bar"><div><strong id="save-status">Settings loaded</strong><p id="save-hint">Use Homebridge’s Save button below, then restart the child bridge.</p></div><button id="retry-stage" type="button" class="secondary" hidden>Retry preparing Save</button></footer>
   </div>
   <section id="editor" class="panel" hidden aria-labelledby="editor-title">
     <button id="back-devices" type="button" class="back-button">← Back to devices</button>
-    <div class="section-heading"><div><p id="editor-type" class="eyebrow"></p><h2 id="editor-title" tabindex="-1">Device settings</h2><p>Apply your changes, then save settings.</p></div></div>
+    <div class="section-heading"><div><p id="editor-type" class="eyebrow"></p><h2 id="editor-title" tabindex="-1">Device settings</h2><p>Apply your changes, then click Homebridge’s Save button below.</p></div></div>
     <p id="editor-message" class="notice error" role="alert" hidden></p>
     <form id="device-form" novalidate><div id="device-fields"></div><div class="editor-actions"><button id="apply-device" type="submit" class="primary">Apply device</button><button id="cancel-edit" type="button" class="secondary">Cancel</button></div></form>
-  </section>
+  <p id="editor-save-hint" class="field-help">Homebridge’s Save button is disabled until you apply or cancel this device edit.</p></section>
   <section id="api-reference" class="panel" hidden aria-labelledby="api-title">
     <button id="back-api" type="button" class="back-button">← Back to devices</button>
     <div class="section-heading"><div><p id="api-type" class="eyebrow"></p><h2 id="api-title" tabindex="-1">API calls</h2><p>Build and copy requests for your external program.</p></div></div>

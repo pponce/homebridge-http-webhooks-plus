@@ -43,10 +43,12 @@ async function pageFor(config = fixture, options = {}) {
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(({config, schema, options}) => {
     const copy = value => JSON.parse(JSON.stringify(value));
-    window.mock = {config: copy(config), saved: null, updates: 0, saves: 0, failSave: false, hostDisabled: false, requests:[]};
+    window.mock = {config: copy(config), saved: null, updates: 0, saves: 0, failSave: false, hostDisabled: false, failStage:false, holdUpdates:false, pendingUpdates:[], requests:[]};
     const api = new EventTarget();
     Object.assign(api, {
-      plugin: {installedVersion: '0.6.0'}, disableSaveButton() { mock.hostDisabled = true; },
+      plugin: {installedVersion: '0.7.3'},
+      disableSaveButton() { mock.hostDisabled = true; document.querySelector('#homebridge-save').disabled = true; document.querySelector('#homebridge-valid').hidden = true; },
+      enableSaveButton() { mock.hostDisabled = false; document.querySelector('#homebridge-save').disabled = false; document.querySelector('#homebridge-valid').hidden = false; },
       hideSchemaForm() {}, fixScrollHeight() {}, showSpinner() {}, hideSpinner() {},
       async getPluginConfig() { if (options.failLoad) throw Error('synthetic'); return copy(mock.config); },
       async getPluginConfigSchema() { return copy(schema); },
@@ -56,11 +58,27 @@ async function pageFor(config = fixture, options = {}) {
         if (mock.requestError) throw Error('private-request-error');
         return mock.response || {status:200,body:'{"success":true}'};
       },
-      async updatePluginConfig(value) { mock.updates++; mock.config = copy(value); return copy(value); },
+      async updatePluginConfig(value) {
+        mock.updates++;
+        if (mock.holdUpdates) await new Promise(resolve => mock.pendingUpdates.push(resolve));
+        if (mock.failStage) throw Error('synthetic secret must not be shown');
+        mock.config = copy(value); return copy(value);
+      },
       async savePluginConfig() { mock.saves++; if (mock.failSave) throw Error('synthetic secret must not be shown'); mock.saved = copy(mock.config); }
     });
     window.homebridge = api;
-    window.addEventListener('load', () => { document.body.className = 'config-ui-x-teal'; api.dispatchEvent(new Event('ready')); });
+    window.addEventListener('load', () => {
+      document.body.className = 'config-ui-x-teal';
+      // Simulate the parent modal controls: only this host button writes to disk.
+      const footer=document.createElement('footer');
+      footer.innerHTML='<span id="homebridge-valid">✓</span><button id="homebridge-save" type="button">Homebridge Save</button><p id="homebridge-save-feedback"></p>';
+      document.body.append(footer);
+      document.querySelector('#homebridge-save').addEventListener('click',async()=>{
+        try {await api.savePluginConfig(); document.querySelector('#homebridge-save-feedback').textContent='Saved';}
+        catch (_) {document.querySelector('#homebridge-save-feedback').textContent='Could not save settings. Try again.';}
+      });
+      api.dispatchEvent(new Event('ready'));
+    });
   }, {config, schema, options});
   await page.goto(url);
   if (!options.failLoad) await page.waitForSelector('#overview:not([hidden])');
@@ -79,12 +97,15 @@ test('opening is read-only; no-op device edit preserves every block, unknown key
   assert.equal(await page.locator('.device-row').count(), 4);
   assert.equal(await page.evaluate(() => mock.updates), 0);
   assert.equal(await page.evaluate(() => mock.saves), 0);
-  assert.equal(await page.evaluate(() => mock.hostDisabled), true);
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  assert.equal(await page.locator('#homebridge-valid').isVisible(),true);
+  assert.equal(await page.locator('#save-settings').count(),0);
   await screenshot(page, 'overview-light');
   await page.getByRole('button', {name: 'Edit Hall motion', exact: true}).click();
   assert.equal(await page.locator('#device-id').inputValue(), '0');
   await page.getByRole('button', {name: 'Apply changes', exact: true}).click();
-  await page.getByRole('button', {name: 'Save settings', exact: true}).click();
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  await page.locator('#homebridge-save').click();
   await page.waitForFunction(() => mock.saved !== null);
   assert.deepEqual(await page.evaluate(() => mock.saved), fixture);
   assert.deepEqual(errors, []);
@@ -98,7 +119,8 @@ test('delete garage and lock, retain token, save and reopen without generating a
     await row.getByRole('button', {name: 'Remove', exact: true}).click();
     await row.getByRole('button', {name: 'Confirm removal', exact: true}).click();
   }
-  await page.getByRole('button', {name: 'Save settings', exact: true}).click();
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  await page.locator('#homebridge-save').click();
   await page.waitForFunction(() => mock.saved !== null);
   initial[1].garagedooropeners = []; initial[1].lockmechanisms = [];
   const saved = await page.evaluate(() => mock.saved);
@@ -146,7 +168,8 @@ test('all 15 types add explicitly, cancel creates nothing, validation blocks dup
   assert.equal(await page.locator('#device-on_headers').getAttribute('aria-invalid'), 'true');
   await page.locator('#device-on_headers').fill('{"X-Example":"test"}');
   await page.locator('#apply-device').click();
-  await page.locator('#save-settings').click();
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  await page.locator('#homebridge-save').click();
   await page.waitForFunction(() => mock.saved !== null);
   const saved = await page.evaluate(() => mock.saved[0]);
   for (const family of Object.keys(labels)) assert.equal(saved[family].length, 1, family);
@@ -172,7 +195,8 @@ test('theme follows Homebridge, mobile fits, legacy alias edits remain consisten
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
   await screenshot(page, 'garage-mobile');
   await page.locator('#apply-device').click();
-  await page.locator('#save-settings').click();
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  await page.locator('#homebridge-save').click();
   await page.waitForFunction(() => mock.saved !== null);
   const saved = await page.evaluate(() => mock.saved[1].garagedooropeners[0]);
   assert.equal(saved.state_mode, 'optimistic'); assert.equal(saved.external_state, false);
@@ -185,17 +209,20 @@ test('failed save keeps edits for retry; failed load cannot overwrite config; se
   await openGroup(page, 'Incoming State API');
   assert.equal(await page.locator('#platform-state_api_token').getAttribute('type'), 'password');
   await page.locator('#platform-state_api_token').fill('short');
-  await page.locator('#save-settings').click();
+  assert.equal(await page.locator('#homebridge-save').isDisabled(),true);
+  assert.match(await page.locator('#save-hint').textContent(),/Correct/);
   assert.equal(await page.evaluate(() => mock.updates), 0);
   await page.locator('#platform-state_api_token').fill('');
   await page.locator('#platform-webhook_port').fill('51930');
   await page.evaluate(() => { mock.failSave = true; });
-  await page.locator('#save-settings').click();
-  await page.waitForFunction(() => document.querySelector('#save-status').textContent === 'Changes not saved');
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  await page.locator('#homebridge-save').click();
+  await page.waitForFunction(() => document.querySelector('#homebridge-save-feedback').textContent.includes('Could not save'));
   assert.equal(await page.locator('#platform-webhook_port').inputValue(), '51930');
   assert.doesNotMatch(await page.locator('#page-message').textContent(), /synthetic secret/);
   await page.evaluate(() => { mock.failSave = false; });
-  await page.locator('#save-settings').click();
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  await page.locator('#homebridge-save').click();
   await page.waitForFunction(() => mock.saved !== null);
   assert.equal(await page.evaluate(() => Object.hasOwn(mock.saved[1], 'state_api_token')), false);
   assert.deepEqual(errors, []);
@@ -239,7 +266,7 @@ test('API reference builds calls without configuration writes, requests, or cred
   assert.equal(await page.evaluate(() => mock.updates), 0);
   assert.equal(await page.evaluate(() => mock.saves), 0);
   assert.deepEqual(await page.evaluate(() => mock.config), initial);
-  assert.equal(await page.locator('#save-settings').isDisabled(), true);
+  assert.equal(await page.locator('#homebridge-save').isDisabled(), false);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -345,7 +372,7 @@ test('failed save keeps edits; Bearer token generation is secure, masked and sta
   const generate=page.getByRole('button',{name:'Generate token',exact:true});
   await generate.click();const first=await input.inputValue();assert.match(first,/^[a-f0-9]{64}$/);
   assert.equal(await input.getAttribute('type'),'password');
-  assert.equal(await page.evaluate(()=>mock.updates),0);assert.equal(await page.evaluate(()=>mock.saves),0);
+  await page.waitForFunction(()=>!mock.hostDisabled);assert.equal(await page.evaluate(()=>mock.saves),0);
   await generate.click();const second=await input.inputValue();assert.match(second,/^[a-f0-9]{64}$/);assert.notEqual(second,first);
   await page.evaluate(()=>Object.defineProperty(window.crypto,'getRandomValues',{configurable:true,value:()=>{throw Error('unavailable');}}));
   await generate.click();assert.equal(await input.inputValue(),second);
@@ -356,7 +383,49 @@ test('failed save keeps edits; Bearer token generation is secure, masked and sta
   await page.setViewportSize({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await screenshot(page,'bearer-token-generation-mobile');
-  await page.locator('#save-settings').click();await page.waitForFunction(()=>mock.saved!==null);
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  await page.locator('#homebridge-save').click();await page.waitForFunction(()=>mock.saved!==null);
   assert.equal(await page.evaluate(()=>mock.saved[1].webhook_bearer_token),second);
   assert.deepEqual(errors,[]);await context.close();
+});
+
+test('failed save keeps edits: native Save waits for staging, validates all blocks and recovers from failures', async () => {
+  const {page,context,errors}=await pageFor();
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  await page.getByRole('button',{name:'Edit Desk light',exact:true}).click();
+  assert.equal(await page.locator('#homebridge-save').isDisabled(),true);
+  assert.equal(await page.locator('#homebridge-valid').isVisible(),false);
+  await page.locator('#device-name').fill('Changed light');
+  assert.equal(await page.evaluate(()=>mock.updates),0);
+  await page.locator('#cancel-edit').click();
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  assert.equal(await page.evaluate(()=>mock.updates),0);
+  await page.evaluate(()=>{mock.holdUpdates=true;});
+  await page.locator('#platform-webhook_port').fill('51931');
+  await page.waitForFunction(()=>mock.pendingUpdates.length===1);
+  await page.locator('#platform-webhook_port').fill('51932');
+  assert.equal(await page.locator('#homebridge-save').isDisabled(),true);
+  await page.evaluate(()=>{mock.holdUpdates=false;mock.pendingUpdates.shift()();});
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  assert.equal(await page.evaluate(()=>mock.config[1].webhook_port),'51932');
+  assert.equal(await page.evaluate(()=>mock.saves),0);
+  await page.evaluate(()=>{mock.failStage=true;});
+  await page.locator('#platform-webhook_port').fill('51933');
+  await page.waitForSelector('#retry-stage:not([hidden])');
+  assert.equal(await page.locator('#homebridge-save').isDisabled(),true);
+  assert.doesNotMatch(await page.locator('#save-hint').textContent(),/synthetic secret/);
+  assert.equal(await page.locator('#platform-webhook_port').inputValue(),'51933');
+  await page.evaluate(()=>{mock.failStage=false;});
+  await page.locator('#retry-stage').click();
+  await page.waitForFunction(()=>!mock.hostDisabled);
+  await page.locator('#homebridge-save').click();
+  await page.waitForFunction(()=>mock.saved!==null);
+  assert.equal(await page.evaluate(()=>mock.saved[1].webhook_port),'51933');
+  assert.deepEqual(errors,[]);await context.close();
+  const bad=structuredClone(fixture);bad[2].lights=[{id:'invalid',on_url:'not a URL'}];
+  const invalid=await pageFor(bad);
+  assert.equal(await invalid.page.locator('#homebridge-save').isDisabled(),true);
+  assert.match(await invalid.page.locator('#save-hint').textContent(),/configured device needs attention/);
+  assert.equal(await invalid.page.evaluate(()=>mock.updates),0);
+  await invalid.context.close();
 });

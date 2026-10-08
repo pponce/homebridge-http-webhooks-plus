@@ -1,5 +1,11 @@
 ## 0.7.1
 
+## 0.7.3
+
+- Use Homebridge’s bottom Save button as the single final save; remove the custom Save settings button.
+- Validate and stage drafts before enabling Save and its native green checkmark. Disable Save during device edits, invalid settings and pending updates, with visible explanations and a retry for staging failures.
+- Serialize staging updates so older requests cannot overwrite newer edits. Opening existing settings remains read-only; staging never saves to disk or sends device commands.
+
 ## 0.7.2
 
 - Explain disabled API runner buttons beside the button, including external-action enablement and local-address requirements.
