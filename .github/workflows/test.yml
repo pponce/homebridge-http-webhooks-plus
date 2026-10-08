@@ -42,9 +42,13 @@ jobs:
           node-version: 24
       - run: npm install --ignore-scripts --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - run: node --test --test-name-pattern="$UI_SCENARIO" test/ui.browser.cjs
+      - id: browser
+        run: node --test --test-reporter=./test/ui-reporter.cjs --test-name-pattern="$UI_SCENARIO" test/ui.browser.cjs
         env:
           UI_SCENARIO: ${{ matrix.scenario }}
+      - name: ${{ steps.browser.outputs.result || 'Browser result unavailable' }}
+        if: always()
+        run: echo 'See the browser test step for details and the artifact for screenshots.'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
