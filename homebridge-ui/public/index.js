@@ -123,6 +123,20 @@
       reveal.setAttribute('aria-pressed', 'false');
       row.append(input, reveal);
       wrapper.append(row);
+      if (key === 'webhook_bearer_token') {
+        const generate = button('Generate token', 'secondary', () => {
+          try {
+            const bytes = new Uint8Array(32);
+            window.crypto.getRandomValues(bytes);
+            input.value = Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+            input.dispatchEvent(new Event('input', {bubbles: true}));
+          } catch (_) {
+            showFieldError(record, 'Secure random generation is unavailable. Enter a token manually.');
+          }
+        });
+        generate.id = id + '-generate';
+        wrapper.append(generate);
+      }
     } else wrapper.append(input);
     const help = helpText(key, schema);
     input.setAttribute('aria-describedby', id + '-help ' + record.error.id);

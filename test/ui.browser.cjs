@@ -320,3 +320,28 @@ test('API reference Bearer examples use placeholders and follow saved per-device
   assert.equal(await page.evaluate(()=>mock.requests.length),0);
   assert.deepEqual(errors,[]);await context.close();
 });
+test('failed save keeps edits; Bearer token generation is secure, masked and staged until Save', async () => {
+  const initial=structuredClone(fixture);initial[1].webhook_bearer_token='existing_fixture_token_0123456789abcdef';
+  const {page,context,errors}=await pageFor(initial);
+  await openGroup(page,'Authentication and HTTPS');
+  const input=page.locator('#platform-webhook_bearer_token');
+  assert.equal(await input.inputValue(),initial[1].webhook_bearer_token);
+  assert.equal(await page.evaluate(()=>mock.updates),0);
+  const generate=page.getByRole('button',{name:'Generate token',exact:true});
+  await generate.click();const first=await input.inputValue();assert.match(first,/^[a-f0-9]{64}$/);
+  assert.equal(await input.getAttribute('type'),'password');
+  assert.equal(await page.evaluate(()=>mock.updates),0);assert.equal(await page.evaluate(()=>mock.saves),0);
+  await generate.click();const second=await input.inputValue();assert.match(second,/^[a-f0-9]{64}$/);assert.notEqual(second,first);
+  await page.evaluate(()=>Object.defineProperty(window.crypto,'getRandomValues',{configurable:true,value:()=>{throw Error('unavailable');}}));
+  await generate.click();assert.equal(await input.inputValue(),second);
+  assert.match(await page.locator('#platform-webhook_bearer_token-error').textContent(),/Secure random generation is unavailable/);
+  await page.getByRole('button',{name:'Show or hide Webhook Bearer token',exact:true}).click();
+  assert.equal(await input.getAttribute('type'),'text');
+  await page.getByRole('button',{name:'Show or hide Webhook Bearer token',exact:true}).click();
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await screenshot(page,'bearer-token-generation-mobile');
+  await page.locator('#save-settings').click();await page.waitForFunction(()=>mock.saved!==null);
+  assert.equal(await page.evaluate(()=>mock.saved[1].webhook_bearer_token),second);
+  assert.deepEqual(errors,[]);await context.close();
+});

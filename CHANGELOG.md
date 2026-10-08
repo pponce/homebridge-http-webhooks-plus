@@ -1,3 +1,11 @@
+## 0.7.1
+
+- Add Generate token beside the global Webhook Bearer token field. Use the
+  browser’s cryptographic random generator for a 256-bit, 64-character hex
+  token. Generation only stages the value; Save settings is still required.
+- Preserve existing tokens on load and keep generated tokens masked. If secure
+  random generation is unavailable, require manual entry without a weak fallback.
+
 ## 0.7.0
 
 - Add opt-in external action execution for every controllable accessory family.

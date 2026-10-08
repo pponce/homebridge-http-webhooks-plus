@@ -772,7 +772,11 @@ Neither the listener nor the reference page automatically retries a command.
 
 Set **Webhook Bearer token** in Webhook settings → Authentication and HTTPS to
 require authentication on incoming reports and actions for every accessory.
-Use a random 32–256 character token containing letters, numbers, underscores
+Click **Generate token** to create a secure random 64-character token, then
+use **Show** to copy it into your external program. Save settings and restart
+the child bridge to apply it. Existing tokens stay unchanged until you edit or
+generate a replacement. You can also enter a random 32–256 character token
+containing letters, numbers, underscores
 or hyphens. For example, generate one with `openssl rand -hex 32`.
 Choose Bearer or Basic authentication; clear the Basic user/password when
 switching to Bearer. Omit or clear the token to retain existing authentication.
