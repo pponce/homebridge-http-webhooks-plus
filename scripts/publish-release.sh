@@ -36,14 +36,22 @@ node -e 'const fs=require("fs");let r;try{r=JSON.parse(fs.readFileSync(process.a
 echo 'Complete any npm authentication link in your browser, leaving this terminal open.'
 npm whoami --registry="$task_registry" || npm login --browser=false --registry="$task_registry"
 npm publish "$task_tarball" --access public --browser=false --registry="$task_registry"
-for task_attempt in {1..12}; do
-  task_actual=$(npm view "$task_name@$task_version" dist.integrity --prefer-online --fetch-retries=0 --fetch-timeout=10000 --registry="$task_registry" 2>/dev/null) || task_actual=''
+echo 'Waiting up to 10 minutes for npm registry confirmation.'
+task_confirmation_deadline=$((SECONDS + 600))
+while ((SECONDS < task_confirmation_deadline)); do
+  task_remaining=$((task_confirmation_deadline - SECONDS))
+  ((task_remaining > 0)) || break
+  task_fetch_timeout_ms=$((task_remaining < 10 ? task_remaining * 1000 : 10000))
+  task_actual=$(npm view "$task_name@$task_version" dist.integrity --prefer-online --fetch-retries=0 --fetch-timeout="$task_fetch_timeout_ms" --registry="$task_registry" 2>/dev/null) || task_actual=''
   if [[ "$task_actual" = "$task_integrity" ]]; then
     echo "Published and verified: $task_name@$task_version"
     exit 0
   fi
   if [[ -n "$task_actual" ]]; then echo 'Registry artifact differs; stopped for review.'; exit 1; fi
-  [[ "$task_attempt" = 12 ]] || sleep 5
+  task_remaining=$((task_confirmation_deadline - SECONDS))
+  ((task_remaining > 0)) || break
+  echo "Waiting for npm registry confirmation; up to $task_remaining seconds remaining."
+  sleep "$((task_remaining < 10 ? task_remaining : 10))"
 done
-echo 'npm accepted publication, but registry verification is pending. Rerun this script to verify before installing.'
+echo 'npm accepted publication, but registry verification is still pending after 10 minutes. Rerun this script to verify before installing.'
 exit 1

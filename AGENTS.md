@@ -5,6 +5,10 @@ particular custom controller, household configuration or private repository.
 Use neutral examples and keep deployment-specific patches, markers, migrations,
 credentials and hardware sequencing outside this repository and npm package.
 
+Allow up to 10 minutes for npm publication confirmation in release scripts.
+Use an elapsed-time deadline, stop early when registry integrity matches, and
+report progress while waiting.
+
 Release 0.2.1 is a package-name migration of upstream 0.2.0. Its exact source
 fingerprint tests intentionally enforce unchanged accessory behavior. Introduce
 future features with meaningful behavioral tests, documented configuration and
