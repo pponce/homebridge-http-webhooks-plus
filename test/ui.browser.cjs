@@ -25,7 +25,7 @@ before(async () => {
   server = http.createServer((req, res) => {
     const file = req.url === '/' ? 'index.html' : req.url.slice(1);
     if (!['index.html', 'index.js', 'model.js', 'styles.css'].includes(file)) { res.writeHead(404).end(); return; }
-    res.setHeader('Content-Type', file.endsWith('.css') ? 'text/css' : file.endsWith('.js') ? 'text/javascript' : 'text/html');
+    res.setHeader('Content-Type', (file.endsWith('.css') ? 'text/css' : file.endsWith('.js') ? 'text/javascript' : 'text/html') + '; charset=utf-8');
     if (file !== 'index.html') { res.end(fs.readFileSync(path.join(root, file))); return; }
     res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + fs.readFileSync(path.join(root, file), 'utf8') + '</body></html>');
   });

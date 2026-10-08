@@ -105,7 +105,8 @@
         M.isObject(target[key]) ? JSON.stringify(target[key], null, 2) : String(target[key]));
     if (input.tagName !== 'SELECT') {
       input.placeholder = schema.default !== undefined ? 'Default: ' + schema.default :
-        key.endsWith('_url') ? 'https://device.example/command' : String(schema.placeholder ?? '');
+        key.endsWith('_url') ? 'https://device.example/command' :
+          key.endsWith('_method') ? 'Default: GET' : String(schema.placeholder ?? '');
     }
     const record = {key, target, schema, input, wrapper, parseError: '', error: node('p', 'field-error')};
     record.error.id = id + '-error';
