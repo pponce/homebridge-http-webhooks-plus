@@ -1,3 +1,14 @@
+## 0.6.1
+
+- Add an API calls page beside every configured device. Show device-specific
+  fields, accepted values, authentication requirements, and copyable URLs and
+  curl examples. Garage and lock references also offer JSON updates and status.
+- Build examples using the device ID, webhook port, HTTPS setting, enabled fan
+  controls, and configured button names/events. Credentials remain placeholders.
+  Reference inputs do not save configuration or send requests to devices.
+- Document fan power and physical-control parameter requirements in examples
+  while preserving existing accessory behavior.
+
 ## 0.6.0
 
 - Replace the flattened 0.5.1 settings form with a custom Homebridge configuration
@@ -612,3 +623,4 @@ Bugfix:
 ## 0.0.1
 
 Initial release version.
+

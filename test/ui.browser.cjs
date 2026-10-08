@@ -24,7 +24,7 @@ before(async () => {
   fs.mkdirSync(artifacts, {recursive: true});
   server = http.createServer((req, res) => {
     const file = req.url === '/' ? 'index.html' : req.url.slice(1);
-    if (!['index.html', 'index.js', 'model.js', 'styles.css'].includes(file)) { res.writeHead(404).end(); return; }
+    if (!['index.html', 'index.js', 'model.js', 'api.js', 'styles.css'].includes(file)) { res.writeHead(404).end(); return; }
     res.setHeader('Content-Type', (file.endsWith('.css') ? 'text/css' : file.endsWith('.js') ? 'text/javascript' : 'text/html') + '; charset=utf-8');
     if (file !== 'index.html') { res.end(fs.readFileSync(path.join(root, file))); return; }
     res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + fs.readFileSync(path.join(root, file), 'utf8') + '</body></html>');
@@ -199,3 +199,42 @@ test('failed save keeps edits for retry; failed load cannot overwrite config; se
   assert.equal(await failed.page.evaluate(() => mock.updates), 0);
   await failed.context.close();
 });
+
+test('API reference builds calls without configuration writes, requests, or credential exposure', async () => {
+  const initial = structuredClone(fixture);
+  initial[1].http_auth_user = 'private-user'; initial[1].http_auth_pass = 'private-password';
+  initial[1].garagedooropeners[0].id = 'garage/é & door';
+  const {page, context, errors} = await pageFor(initial);
+  let copied = '';
+  await page.exposeFunction('recordCopy', text => { copied = text; });
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {value: {writeText: text => window.recordCopy(text)}, configurable:true}));
+  await page.getByRole('button', {name: 'API calls for Garage door', exact:true}).click();
+  await page.locator('#api-host').fill('192.0.2.10');
+  await page.locator('#api-value').selectOption('0');
+  await page.getByRole('button', {name:'Copy url', exact:true}).click();
+  await page.waitForFunction(() => document.querySelector('#api-content [role=status]').textContent === 'Copied.');
+  assert.equal(copied, 'http://192.0.2.10:51928/?accessoryId=garage%2F%C3%A9%20%26%20door&currentdoorstate=0');
+  await page.locator('#api-format').selectOption('json');
+  assert.match(await page.locator('.api-examples').textContent(), /currentState/);
+  assert.match(await page.locator('.api-examples').textContent(), /YOUR_HTTP_USER:YOUR_HTTP_PASSWORD/);
+  assert.match(await page.locator('.api-examples').textContent(), /YOUR_STATE_API_TOKEN/);
+  assert.doesNotMatch(await page.locator('#api-reference').textContent(), /private-user|private-password|synthetic_fixture_token/);
+  await page.setViewportSize({width:390, height:844});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await screenshot(page, 'api-garage-mobile');
+  await page.evaluate(() => document.body.classList.add('dark-mode'));
+  await screenshot(page, 'api-garage-dark');
+  await page.locator('#back-api').click();
+  assert.equal(await page.getByRole('button', {name:'API calls for Garage door',exact:true}).evaluate(element => element === document.activeElement), true);
+  await page.getByRole('button', {name:'API calls for Hall motion',exact:true}).click();
+  assert.equal(await page.locator('#api-value').inputValue(), 'true');
+  assert.equal(await page.locator('#api-format option').count(), 1);
+  await page.locator('#back-api').click();
+  assert.equal(await page.evaluate(() => mock.updates), 0);
+  assert.equal(await page.evaluate(() => mock.saves), 0);
+  assert.deepEqual(await page.evaluate(() => mock.config), initial);
+  assert.equal(await page.locator('#save-settings').isDisabled(), true);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+

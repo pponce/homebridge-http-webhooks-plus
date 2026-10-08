@@ -59,6 +59,12 @@ with cards, teal accents, grouped fields, and Homebridge light/dark themes.
 - **Devices:** view configured accessories, add one of the 15 device types, edit
   its grouped settings, or confirm removal. No devices are created merely by
   opening or saving the page.
+- **API calls:** beside each device, open a reference with supported fields,
+  value meanings, and copyable URLs and curl examples. Change the hostname and
+  example values without changing settings or sending requests. Garage and lock
+  pages also show JSON updates and status calls. Authentication credentials are
+  placeholders; replace them in your external program. Examples reflect current
+  configuration values, so save and restart before using changed settings.
 - **Webhook settings:** configure the listener, optional incoming State API,
   authentication, HTTPS, logging, and request limits.
 - **Save settings:** device edits are staged with **Apply changes**; this saves

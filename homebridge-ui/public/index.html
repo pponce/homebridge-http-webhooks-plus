@@ -31,7 +31,14 @@
     <p id="editor-message" class="notice error" role="alert" hidden></p>
     <form id="device-form" novalidate><div id="device-fields"></div><div class="editor-actions"><button id="apply-device" type="submit" class="primary">Apply device</button><button id="cancel-edit" type="button" class="secondary">Cancel</button></div></form>
   </section>
+  <section id="api-reference" class="panel" hidden aria-labelledby="api-title">
+    <button id="back-api" type="button" class="back-button">← Back to devices</button>
+    <div class="section-heading"><div><p id="api-type" class="eyebrow"></p><h2 id="api-title" tabindex="-1">API calls</h2><p>Build and copy requests for your external program.</p></div></div>
+    <div id="api-content"></div>
+  </section>
   <p class="app-footer">HTTP Webhooks Plus · <a href="https://github.com/pponce/homebridge-http-webhooks-plus#readme" target="_blank" rel="noopener noreferrer">Documentation ↗</a></p>
 </main>
 <script src="model.js"></script>
+<script src="api.js"></script>
 <script src="index.js"></script>
+

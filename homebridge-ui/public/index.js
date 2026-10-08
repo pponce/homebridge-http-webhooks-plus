@@ -3,7 +3,7 @@
   const M = window.WebhooksConfig;
   const $ = id => document.getElementById(id);
   let properties, blocks, baseline, activeIndex, editing, ready = false, saving = false;
-  let platformControls = [], deviceControls = [];
+  let platformControls = [], deviceControls = [], apiTrigger;
   const config = () => blocks[activeIndex];
   const node = (tag, className, text) => {
     const element = document.createElement(tag);
@@ -273,7 +273,10 @@
       const actions = node('div', 'row-actions');
       const edit = button('Edit', 'secondary', () => openEditor(row.family, row.index));
       edit.setAttribute('aria-label', 'Edit ' + name);
-      actions.append(edit, button('Remove', 'quiet', () => {
+      const api = button('API calls', 'secondary', () => openApi(row, api));
+      api.setAttribute('aria-label', 'API calls for ' + name);
+      api.disabled = !M.isObject(row.data) || data.id === undefined || data.id === null || data.id === '';
+      actions.append(edit, api, button('Remove', 'quiet', () => {
         actions.replaceChildren(button('Keep device', 'secondary', renderDevices), button('Confirm removal', 'danger', () => {
           if (!validateControls(platformControls, config(), properties, true)) return;
           blocks[activeIndex] = M.removeDevice(config(), row.family, row.index);
@@ -285,6 +288,16 @@
       element.append(symbol, info, actions);
       $('device-list').append(element);
     });
+    window.homebridge.fixScrollHeight();
+  }
+  function openApi(row, trigger) {
+    apiTrigger = trigger;
+    $('overview').hidden = true;
+    $('api-reference').hidden = false;
+    $('api-title').textContent = (row.data.name || M.labels[row.family]) + ' · API calls';
+    $('api-type').textContent = M.labels[row.family] + ' · ID: ' + row.data.id;
+    window.WebhooksApi.render($('api-content'), row.family, row.data, config(), window.homebridge);
+    $('api-title').focus();
     window.homebridge.fixScrollHeight();
   }
   function openEditor(family, index = null) {
@@ -400,6 +413,12 @@
     });
     $('cancel-add').addEventListener('click', () => { $('type-picker').hidden = true; $('add-device').hidden = false; $('add-device').focus(); });
     $('back-devices').addEventListener('click', () => closeEditor());
+    $('back-api').addEventListener('click', () => {
+      $('api-reference').hidden = true;
+      $('overview').hidden = false;
+      apiTrigger?.focus();
+      window.homebridge.fixScrollHeight();
+    });
     $('cancel-edit').addEventListener('click', () => closeEditor());
     $('device-form').addEventListener('submit', applyDevice);
     $('platform-form').addEventListener('submit', event => { event.preventDefault(); save(); });
@@ -415,3 +434,4 @@
   if (window.homebridge) window.homebridge.addEventListener('ready', init, {once: true});
   else init();
 }());
+

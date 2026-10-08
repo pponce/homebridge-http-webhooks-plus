@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scenario: ['opening is read-only', 'delete garage and lock', 'all 15 types', 'theme follows Homebridge', 'failed save keeps edits']
+        scenario: ['opening is read-only', 'delete garage and lock', 'all 15 types', 'theme follows Homebridge', 'failed save keeps edits', 'API reference']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,3 +54,4 @@ jobs:
         with:
           name: configuration-ui-${{ strategy.job-index }}
           path: test/ui-artifacts/
+

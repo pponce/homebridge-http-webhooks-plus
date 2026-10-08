@@ -14,11 +14,28 @@ trap 'rm -rf -- "$task_tmp"' EXIT
 npm install --include=dev --ignore-scripts --no-package-lock --no-audit --no-fund
 npm test
 npm run test:hap
+npx playwright install chromium
+npm run test:ui
 node -e 'if (typeof require("./index.js") !== "function") process.exit(1)'
 [[ -z "$(git status --porcelain)" ]] || { echo 'Checks changed source files; stopped.'; exit 1; }
 npm pack --json --pack-destination "$task_tmp" > "$task_tmp/pack.json"
 task_tarball="$task_tmp/$(node -p 'require(process.argv[1])[0].filename' "$task_tmp/pack.json")"
 task_integrity=$(node -p 'require(process.argv[1])[0].integrity' "$task_tmp/pack.json")
+tar -tzf "$task_tarball" > "$task_tmp/package-files.txt"
+node - "$task_tmp/package-files.txt" <<'NODE'
+const fs = require('fs');
+const files = new Set(fs.readFileSync(process.argv[2], 'utf8').trim().split('\n'));
+for (const file of ['index.js', 'package.json', 'config.schema.json', 'LICENSE',
+  'homebridge-ui/public/index.html', 'homebridge-ui/public/index.js',
+  'homebridge-ui/public/model.js', 'homebridge-ui/public/api.js',
+  'homebridge-ui/public/styles.css', 'docs/STATE_API.md']) {
+  if (!files.has('package/' + file)) throw Error('Missing package file: ' + file);
+}
+for (const file of files) {
+  if (/^package\/(?:test|scripts|node_modules|\.git)\//.test(file)) throw Error('Unexpected package file: ' + file);
+}
+console.log('Tarball inspected: runtime, API reference, UI assets and license present.');
+NODE
 echo "Prepared $task_name@$task_version from $task_expected_commit"
 echo "Package integrity: $task_integrity"
 
