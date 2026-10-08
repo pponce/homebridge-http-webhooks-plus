@@ -67,9 +67,9 @@
     if (!/^(?:[a-z0-9._-]+|\[[0-9a-f:]+\])$/i.test(name)) throw Error('Enter a hostname, IPv4 address, or bracketed IPv6 address, without a scheme or port.');
     return (platform.https === true ? 'https://' : 'http://') + name + ':' + (platform.webhook_port || '51828');
   }
-  function build(platform, device, family, field, value, host, json = false, fanPower = 'false', notify = false) {
+  function build(platform, device, family, field, value, host, json = false, fanPower = 'false', notify = false, includeBearer = false) {
     const base = origin(platform, host);
-    const auth = authentication(platform, device);
+    const auth = authentication(platform, device, includeBearer);
     let endpoint, body;
     if (json) {
       endpoint = base + '/v1/accessories/' + encode(device.id) + '/state';
@@ -88,16 +88,16 @@
     return {endpoint, body: bodyText, curl: 'curl --request ' + (json ? 'POST' : 'GET') + auth + token +
       (json ? ' --header ' + quote('Content-Type: application/json') + ' --data ' + quote(bodyText) : '') + ' ' + quote(endpoint)};
   }
-  function buildAction(platform, device, field, value, host) {
+  function buildAction(platform, device, field, value, host, includeBearer = false) {
     Actions.value(field, Object.hasOwn(field, 'fixedValue') ? undefined : value);
     const params = {accessoryId: String(device.id), action: 'on'};
     params[Actions.parameter(field)] = Object.hasOwn(field, 'fixedValue') ? Actions.inputValue(field) : value;
     const endpoint = origin(platform, host) + '/?' + Object.entries(params).map(([key, item]) => encode(key) + '=' + encode(item)).join('&');
-    const auth = authentication(platform, device);
+    const auth = authentication(platform, device, includeBearer);
     return {endpoint, body: null, curl: 'curl --request GET' + auth + ' ' + quote(endpoint)};
   }
-  function authentication(platform, device) {
-    if (platform.webhook_bearer_token) return device.disable_bearer_auth === true ? '' : ' --header ' + quote('Authorization: Bearer YOUR_WEBHOOK_TOKEN');
+  function authentication(platform, device, includeBearer = false) {
+    if (platform.webhook_bearer_token) return device.disable_bearer_auth === true ? '' : ' --header ' + quote('Authorization: Bearer ' + (includeBearer ? platform.webhook_bearer_token : 'YOUR_WEBHOOK_TOKEN'));
     return platform.http_auth_user && platform.http_auth_pass ? ' --user ' + quote('YOUR_HTTP_USER:YOUR_HTTP_PASSWORD') : '';
   }
   function defaultHost(platform, network = {}, browserHost = '') {
@@ -128,9 +128,17 @@
     const listenHost = platform.webhook_listen_host;
     if (listenHost === '127.0.0.1' || listenHost === '::1' || listenHost === 'localhost') container.append(el('p', 'The listener is bound to loopback. Calls must originate on the Homebridge machine unless you configure a reachable listener or proxy.', 'notice'));
     const jsonSupported = ['garagedooropeners', 'lockmechanisms'].includes(family);
-    if (platform.webhook_bearer_token && device.disable_bearer_auth !== true) container.append(el('p', 'Bearer authentication is required. In UniFi choose Bearer and enter your webhook token, or add Authorization: Bearer YOUR_WEBHOOK_TOKEN. Saved credentials are never included.', 'field-help'));
+    if (platform.webhook_bearer_token && device.disable_bearer_auth !== true) container.append(el('p', 'Bearer authentication is required. In UniFi choose Bearer and enter your webhook token, or add Authorization: Bearer YOUR_WEBHOOK_TOKEN. Examples use placeholders by default.', 'field-help'));
     else if (!platform.webhook_bearer_token && platform.http_auth_user && platform.http_auth_pass) container.append(el('p', 'Basic authentication is required. Replace YOUR_HTTP_USER and YOUR_HTTP_PASSWORD in the curl example. Saved credentials are never included.', 'field-help'));
     else container.append(el('p', 'These webhook calls do not require authentication with the current settings.', 'field-help'));
+    const includeBearer = el('input'); includeBearer.type = 'checkbox'; includeBearer.id = 'api-include-bearer';
+    const bearerControl = el('div', undefined, 'field');
+    const bearerLabel = el('label', 'Include Bearer token'); bearerLabel.htmlFor = includeBearer.id;
+    const bearerNote = el('p', 'Exposes the Bearer token in the header and curl examples, including copied text. Leave unchecked when sharing examples.', 'field-help');
+    bearerNote.id = 'api-bearer-note'; includeBearer.setAttribute('aria-describedby', bearerNote.id);
+    bearerControl.append(bearerLabel, includeBearer, bearerNote);
+    bearerControl.hidden = !platform.webhook_bearer_token || device.disable_bearer_auth === true;
+    container.append(bearerControl);
     if (!options.length) { container.append(el('p', 'No supported calls are available. Choose a supported sensor type or configure a button with at least one enabled press event.', 'notice')); return; }
     const method = el('select'); method.id = 'api-format';
     for (const [value, label] of [['webhook', 'Report state / event · GET'], ...(jsonSupported ? [['json', 'JSON State API · POST']] : []), ...(actionOptions.length ? [['action', 'Run action · GET']] : [])]) { const option = el('option', label); option.value = value; method.append(option); }
@@ -171,6 +179,8 @@
     const send = el('button', 'Send state report', 'primary'); send.type = 'button'; send.id = 'api-execute';
     const read = el('button', 'Read status', 'secondary'); read.type = 'button'; read.id = 'api-read-status';
     const runButtons = el('div', undefined, 'editor-actions'); runButtons.append(send, read); runner.append(runButtons);
+    const runReason = el('p', undefined, 'field-help'); runReason.id = 'api-run-reason'; runReason.setAttribute('role', 'status');
+    send.setAttribute('aria-describedby', runReason.id); runner.append(runReason);
     runner.append(el('p', 'Sends the displayed request using saved credentials. Run action can operate real hardware. No request is sent until you click a button. Commands are never retried automatically.', 'field-help'));
     const output = el('pre', undefined, 'api-output'); output.id = 'api-output'; output.setAttribute('role', 'status'); output.hidden = true; runner.append(output); container.append(runner);
     let executing = false, valid = false;
@@ -180,7 +190,7 @@
       const payload = {family, id: String(device.id), port: String(platform.webhook_port || '51828'), https: platform.https === true,
         host:host.value, format, field:field.key, buttonName:field.params?.buttonName, value:value.value, fanPower:fan.value, notify:notify.checked};
       executing = true; send.disabled = true; read.disabled = true;
-      const controls = [host, method, call, value, fan, notify]; controls.forEach(input => {input.disabled = true;});
+      const controls = [host, method, call, value, fan, notify, includeBearer]; controls.forEach(input => {input.disabled = true;});
       output.hidden = false; output.textContent = 'Sending…'; refreshHeight();
       try {
         const result = await homebridge.request('/api/execute', payload);
@@ -200,7 +210,12 @@
       read.disabled = executing || !available || !platform.state_api_token;
       read.hidden = !jsonSupported;
       send.textContent = method.value === 'action' ? 'Run action' : ['doorbells','statelessswitches','pushbuttons'].includes(family) ? 'Send event' : 'Send state report';
-      runner.title = !settings.canExecute ? 'Save settings and restart the child bridge before testing changed settings.' : !local ? 'Use this Homebridge instance’s detected IP address for in-page testing.' : '';
+      const reason = method.value === 'action' && device.allow_external_actions !== true ? 'Run action is disabled. Enable Allow external actions in this device’s settings, save settings and restart the child bridge.' :
+        !settings.canExecute ? 'Save settings and restart the child bridge before testing changed settings.' :
+        !local ? 'Use this Homebridge instance’s detected IP address for in-page testing. Proxy URLs can be used from your external program.' :
+        !valid ? 'Choose a valid request value before sending.' :
+        method.value === 'json' && !platform.state_api_token ? 'Configure an Incoming State API token, save settings and restart the child bridge.' : '';
+      runReason.textContent = reason; runReason.hidden = !reason; send.title = reason; runner.title = reason;
     }
     async function copy(text, button) {
       try {
@@ -219,12 +234,13 @@
         if (!Object.hasOwn(field, 'fixedValue') && (!value.checkValidity() || value.value === '' || (field.values && !field.values.some(item => item[0] === value.value)))) throw Error('Choose a valid value within the accepted range.');
         const json = method.value === 'json';
         if (json && !platform.state_api_token) {status.textContent = 'The JSON State API is disabled. Configure a token in Webhook settings → Incoming State API, save and restart the child bridge. Examples below use a placeholder.'; status.hidden = false;}
-        const request = method.value === 'action' ? buildAction(platform, device, field, value.value, host.value) : build(platform, device, family, field, value.value, host.value, json, fan.value, notify.checked);
+        const request = method.value === 'action' ? buildAction(platform, device, field, value.value, host.value, includeBearer.checked) : build(platform, device, family, field, value.value, host.value, json, fan.value, notify.checked, includeBearer.checked);
         valid = true;
         example('URL', request.endpoint); example('curl', request.curl); if (request.body) example('JSON body', request.body);
+        if (platform.webhook_bearer_token && device.disable_bearer_auth !== true) example('Authorization header', 'Authorization: Bearer ' + (includeBearer.checked ? platform.webhook_bearer_token : 'YOUR_WEBHOOK_TOKEN'));
         if (json) {
           const endpoint = request.endpoint.replace(/\/state$/, '');
-          example('Read status', 'curl --request GET' + authentication(platform, device) + ' --header ' + quote('X-Webhooks-Token: YOUR_STATE_API_TOKEN') + ' ' + quote(endpoint));
+          example('Read status', 'curl --request GET' + authentication(platform, device, includeBearer.checked) + ' --header ' + quote('X-Webhooks-Token: YOUR_STATE_API_TOKEN') + ' ' + quote(endpoint));
         }
       } catch (error) {status.textContent = error.message; status.hidden = false;}
       updateButtons();
@@ -239,7 +255,7 @@
       notify.parentElement.hidden = !jsonSupported || device.notification_policy !== 'allow_explicit' || method.value === 'action';
       chooseValue(); renderTable(); update();
     });
-    [host, fan, notify].forEach(input => input.addEventListener(input === host ? 'input' : 'change', update));
+    [host, fan, notify, includeBearer].forEach(input => input.addEventListener(input === host ? 'input' : 'change', update));
     const response = el('details', undefined, 'field-group'); response.append(el('summary', 'Responses and errors'), el('p', 'Successful updates return JSON with success: true. Legacy response fields vary by device and may contain previous values; they are not proof that hardware moved. JSON state updates return the applied snapshot, availability, and notification outcome. A notification outcome of sent means HomeKit publication was requested, not that a phone rendered it.'),
       el('p', 'Common HTTP errors: 400 invalid input; 401 missing or incorrect authentication; 404 accessory or route not found; 405 wrong method; 408 request timeout; 413 body too large; 415 JSON content type required; 503 state storage or publication failed. Legacy devices can also report errors inside a 200 JSON response. Check the response body.'));
     response.addEventListener('toggle', refreshHeight); container.append(response);

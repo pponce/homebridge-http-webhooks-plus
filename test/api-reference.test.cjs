@@ -59,3 +59,21 @@ test('host input cannot insert URL credentials, paths, or a shell expression', (
   assert.equal(A.origin({}, '192.0.2.1'), 'http://192.0.2.1:51828');
   assert.equal(A.origin({}, '[2001:db8::1]'), 'http://[2001:db8::1]:51828');
 });
+
+test('Bearer disclosure requires explicit opt-in and respects exemptions for reports and actions', () => {
+  const platform = {webhook_bearer_token:'synthetic_bearer_0123456789abcdef0123456789'};
+  const device = {id:'desk'};
+  const report = A.fields('lights',device)[0];
+  const action = require('../homebridge-ui/public/actions').fields('lights',device)[0];
+  for (const build of [
+    (include, item) => A.build(platform,item,'lights',report,'true','localhost',false,'false',false,include),
+    (include, item) => A.buildAction(platform,item,action,'','localhost',include)
+  ]) {
+    assert.match(build(false,device).curl,/YOUR_WEBHOOK_TOKEN/);
+    assert.doesNotMatch(build(false,device).curl,/synthetic_bearer/);
+    const shown = build(true,device);
+    assert.match(shown.curl,/Authorization: Bearer synthetic_bearer/);
+    assert.doesNotMatch(shown.endpoint,/synthetic_bearer/);
+    assert.doesNotMatch(build(true,{...device,disable_bearer_auth:true}).curl,/Authorization/);
+  }
+});

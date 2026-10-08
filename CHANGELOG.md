@@ -1,5 +1,10 @@
 ## 0.7.1
 
+## 0.7.2
+
+- Explain disabled API runner buttons beside the button, including external-action enablement and local-address requirements.
+- Add an unchecked Include Bearer token option with an exposure notice and a copyable Authorization header. Authentication settings and execution remain unchanged.
+
 - Add Generate token beside the global Webhook Bearer token field. Use the
   browser’s cryptographic random generator for a 256-bit, 64-character hex
   token. Generation only stages the value; Save settings is still required.

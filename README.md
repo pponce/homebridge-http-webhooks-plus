@@ -792,7 +792,7 @@ query/body fields cannot disable authentication. External action enablement is
 still required separately. The garage/lock JSON State API continues requiring
 its own `X-Webhooks-Token`, even on a Bearer-exempt accessory.
 
-The API calls page shows placeholder credentials in copied examples. Its
+The API calls page shows placeholder credentials by default. Check **Include Bearer token** to reveal the configured webhook token in the Authorization header and curl examples, including copied text. This option starts unchecked each time the page opens and does not change authentication settings or send a request. Do not share examples containing your token. A disabled Run action button displays the requirement that must be satisfied before testing. Its
 in-page runner loads the saved token on the server, follows per-device opt-outs,
 and redacts the token from returned output. Authentication failures return 401
 before any reports or actions run.
