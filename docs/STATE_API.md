@@ -150,7 +150,7 @@ wrong method 405, oversized body 413, wrong content type 415, storage/HAP failur
 503. Incoming requests default to a 10-second deadline, v1 bodies to an 8192-byte
 limit, and ignored query-string webhook bodies to a 65536-byte limit. Configure
 these with platform `webhook_timeout_ms`, `state_api_body_max_bytes`, and
-`webhook_body_max_bytes`; see [HTTP settings](../README.md#shared-http-and-logging-controls)
+`webhook_body_max_bytes`; see [HTTP settings](REFERENCE.md#shared-http-and-logging-controls)
 for their ranges. Headers are bounded by Node's HTTP server limits.
 
 ## Original webhook compatibility

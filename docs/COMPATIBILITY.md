@@ -3,7 +3,7 @@
 This guide covers moving from `homebridge-http-webhooks` to
 `homebridge-http-webhooks-plus`, and updating an existing Plus installation.
 It describes compatibility with Plus 0.6.0. See the [changelog](../CHANGELOG.md)
-for individual releases and the [README](../README.md) for configuration examples.
+for individual releases and the [technical reference](REFERENCE.md) for configuration examples.
 
 ## What stays the same
 

@@ -82,7 +82,7 @@ test('package is independently publishable with only required runtime dependenci
   assert.equal(pkg.engines.homebridge, baseline.engines.homebridge);
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
   assert.equal(pkg.publishConfig.access, 'public');
-  assert.deepEqual(pkg.files, ['index.js', 'src/', 'config.schema.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'docs/COMPATIBILITY.md', 'docs/STATE_API.md', 'homebridge-ui/', 'THIRD_PARTY_NOTICES.md']);
+  assert.deepEqual(pkg.files, ['index.js', 'src/', 'config.schema.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'docs/COMPATIBILITY.md', 'docs/STATE_API.md', 'docs/REFERENCE.md', 'homebridge-ui/', 'THIRD_PARTY_NOTICES.md']);
   assert.match(pkg.repository.url, /pponce\/homebridge-http-webhooks-plus\.git$/);
 });
 
