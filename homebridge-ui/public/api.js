@@ -89,8 +89,10 @@
   }
   function defaultHost(platform, network = {}, browserHost = '') {
     const bound = platform.webhook_listen_host;
+    const browserAddress = browserHost.replace(/^\[|\]$/g, '');
+    const useBrowser = network.addresses?.includes(browserAddress) && !['localhost','127.0.0.1','::1'].includes(browserAddress);
     let host = bound && !['::', '0.0.0.0'].includes(bound) ? bound :
-      network.addresses?.includes(browserHost.replace(/^\[|\]$/g, '')) ? browserHost : network.defaultHost || browserHost || 'homebridge.local';
+      useBrowser ? browserHost : network.defaultHost || browserHost || 'homebridge.local';
     if (host.includes(':') && !host.startsWith('[')) host = '[' + host + ']';
     return host;
   }

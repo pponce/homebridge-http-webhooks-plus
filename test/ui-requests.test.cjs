@@ -14,6 +14,7 @@ test('default address comes from server interfaces or the saved listener; browse
   const info = connectionInfo({lo:[{internal:true,family:'IPv4',address:'127.0.0.1'}],eth0:[{internal:false,family:'IPv4',address:'192.0.2.10'}]},'bridge');
   assert.equal(info.defaultHost,'192.0.2.10');
   assert.equal(Api.defaultHost({},info),'192.0.2.10');
+  assert.equal(Api.defaultHost({},info,'127.0.0.1'),'192.0.2.10');
   assert.equal(Api.defaultHost({webhook_listen_host:'127.0.0.1'},info),'127.0.0.1');
   assert.equal(Api.defaultHost({webhook_listen_host:'::1'},info),'[::1]');
   assert.equal(Api.defaultHost({}, {...info,addresses:[...info.addresses,'192.0.2.11']},'192.0.2.11'),'192.0.2.11');
