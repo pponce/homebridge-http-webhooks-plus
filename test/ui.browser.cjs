@@ -62,8 +62,7 @@ async function pageFor(config = fixture, options = {}) {
   return {page, context, errors};
 }
 async function screenshot(page, name) {
-  const image = await page.screenshot({path: path.join(artifacts, name + '.jpg'), fullPage: true, type: 'jpeg', quality: 72});
-  if (process.env.UI_SCREENSHOT_LOG) console.log('UI_SCREENSHOT:' + name + ':' + image.toString('base64'));
+  await page.screenshot({path: path.join(artifacts, name + '.jpg'), fullPage: true, type: 'jpeg', quality: 72});
 }
 async function openGroup(page, text) {
   const summary = page.locator('summary').filter({hasText: text}).first();

@@ -83,7 +83,7 @@ and choose **Edit**. Open its **State and feedback**, **Notifications**, or
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `state_mode` | `optimistic` | Assume completion after HTTP command success, or choose `external` to wait for a reported current state. HTTP acceptance is not physical position. |
-| `startup_state_policy` | `use_cache` for optimistic; `await_feedback` for external | Use unverified cached/default state, or wait for new reports. A blank/None UI selection means the option is omitted and the contextual default applies. |
+| `startup_state_policy` | `use_cache` for optimistic; `await_feedback` for external | Use unverified cached/default state, or wait for new reports. The Automatic UI selection omits the option so the contextual default applies. |
 | `notification_policy` | `changes_only` | `allow_explicit` also lets clients reaffirm unchanged values, without repeating commands. |
 | `notification_min_interval_ms` | `1000` | Limit repeated identical explicit events, 100–60000 ms. Ordinary changes still propagate. |
 | `request_timeout_ms` | `10000` | Bound each outgoing garage/lock command, including response reading. |

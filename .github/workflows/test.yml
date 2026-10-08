@@ -28,8 +28,13 @@ jobs:
         run: npm pack --dry-run
 
   configuration-ui:
+    name: UI · ${{ matrix.scenario }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: ['opening is read-only', 'delete garage and lock', 'all 15 types', 'theme follows Homebridge', 'failed save keeps edits']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,11 +42,11 @@ jobs:
           node-version: 24
       - run: npm install --ignore-scripts --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:ui
+      - run: node --test --test-name-pattern="$UI_SCENARIO" test/ui.browser.cjs
         env:
-          UI_SCREENSHOT_LOG: '1'
+          UI_SCENARIO: ${{ matrix.scenario }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: configuration-ui-screenshots
+          name: configuration-ui-${{ strategy.job-index }}
           path: test/ui-artifacts/
