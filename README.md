@@ -2,7 +2,9 @@
 
 Connect HTTP devices, services, and automations to Apple Home through
 [Homebridge](https://github.com/homebridge/homebridge). Incoming webhooks update
-accessory state; HomeKit actions can send HTTP requests to your configured URLs.
+accessory state, and external programs can optionally run the same configured
+HTTP actions as HomeKit. Optional Bearer authentication protects incoming
+state reports and action calls, with exemptions available per accessory.
 
 Supported accessories include sensors, switches, push buttons, doorbells, lights
 (on/off and brightness), outlets, thermostats, security systems, garage doors,
@@ -26,6 +28,8 @@ Here's what changes compared with `homebridge-http-webhooks` 0.2.0:
 
 | Situation | Original plugin | HTTP Webhooks Plus |
 | --- | --- | --- |
+| **An external program needs to operate a device** | Incoming webhooks report state or events. | Adds optional **external actions**: `action=on` runs the configured action through the existing HomeKit handler. Omitting it keeps state-report behavior. |
+| **Incoming webhooks need a shared token** | Supports Basic username/password authentication. | Adds optional **Bearer authentication** for incoming reports and actions, with a per-accessory exemption and secure token generation in the UI. |
 | **A garage or lock command succeeds** | Updates HomeKit to the requested state after HTTP success. | Adds optional **external state mode**, which waits for your integration to report the current state. Useful when accepting a command and completing the operation happen at different times. |
 | **Homebridge restarts** | Uses cached state, or defaults to closed/secured if none exists. | Lets each garage or lock wait for a new report before making its current state available. |
 | **An integration stops reporting** | Keeps returning the stored state without an expiry policy. | Can mark garage or lock feedback unavailable after a configurable timeout. Useful for integrations that send regular reports. |
@@ -49,6 +53,64 @@ Your integration remains responsible for reporting accurate state and controllin
 the hardware. The plugin presents those reports to HomeKit and forwards configured
 actions.
 
+## Report state or run an action
+
+Choose what your external program should do:
+
+| Request | Result |
+| --- | --- |
+| `?accessoryId=example-light&state=true` | Report that the light is on; do not call its configured on URL. |
+| `?accessoryId=example-light&state=true&action=on` | Execute the light’s configured on action, using its existing HomeKit state behavior. |
+| `?accessoryId=example-light&state=false&action=on` | Execute the light’s configured off action. |
+
+**`action=on` enables execution.** The other control field supplies the requested
+value. `action=off`, or omitting `action`, keeps the existing report-only behavior;
+`action=off` does not mean “turn the light off.” External actions are disabled by
+default. Enable **Allow external actions** in each device’s settings, click
+**Apply changes**, save with Homebridge’s bottom **Save** button, and restart the
+child bridge. The corresponding outgoing URL must be configured.
+
+Open **API calls** beside a device to choose **Report state / event** or
+**Run action**, see the accepted values, and copy or test a request. Garage doors,
+locks, brightness and other controls use their own fields; see
+[External actions](#external-actions) for the complete list. Sensors and
+button/doorbell events continue reporting information to HomeKit and can trigger
+Home automations; devices without outgoing commands do not gain an action URL.
+
+## Protect calls with a Bearer token
+
+In **Webhook settings → Authentication and HTTPS**, set **Webhook Bearer token**
+or click **Generate token**. Save with Homebridge’s bottom **Save** button and
+restart the child bridge. The token is required for both state reports and action
+calls. An accessory can opt out through **Disable Bearer authentication for this
+device**; action execution still requires its separate enablement.
+
+Send the token in an **Authorization header**, not in the URL:
+
+```bash
+# Report state only.
+curl --request GET \
+  --header 'Authorization: Bearer YOUR_WEBHOOK_TOKEN' \
+  'https://homebridge.example.com/webhooks/?accessoryId=example-light&state=true'
+
+# Run the configured on action.
+curl --request GET \
+  --header 'Authorization: Bearer YOUR_WEBHOOK_TOKEN' \
+  'https://homebridge.example.com/webhooks/?accessoryId=example-light&state=true&action=on'
+```
+
+These example HTTPS URLs assume a reverse proxy forwards `/webhooks/` to the
+plugin listener. Use your own reachable address and configured listener port.
+Use HTTPS for network calls; Bearer authentication alone does not encrypt a
+request. With nginx handling HTTPS, the plugin can use HTTP on the local
+connection to nginx.
+
+For **UniFi Protect**, choose **GET** and **Bearer**, then paste the token alone
+into its token field. UniFi adds the `Authorization: Bearer` header. No body or
+additional Authorization header is needed. See
+[Incoming Bearer authentication](#incoming-bearer-authentication) for Basic-auth
+compatibility, token requirements and the separate garage/lock State API token.
+
 ## Configuration UI
 
 Open the plugin’s **Settings** in Homebridge UI. The custom interface uses the
@@ -63,12 +125,14 @@ with cards, teal accents, grouped fields, and Homebridge light/dark themes.
   value meanings, and copyable URLs and curl examples. Change the hostname and
   example values without changing settings. The address defaults to this
   Homebridge instance's IP. **Send state report** (or **Send event**) and **Run action** send the
-  displayed request and shows its HTTP status and response below; requests only
+  displayed request and show its HTTP status and response below; requests only
   run when clicked. Tests use saved credentials and this instance's saved
   listener, including local self-signed HTTPS. Save and restart before testing
   changed settings. Garage and lock
-  pages also show JSON updates and status calls. Authentication credentials are
-  placeholders; replace them in your external program. Examples reflect current
+  pages also show JSON updates and status calls. Examples use placeholder
+  credentials by default. Check **Include Bearer token** to include the configured
+  token in copyable header and curl examples; the checkbox warns that it exposes
+  the token. Leave it unchecked when sharing examples. Examples reflect current
   configuration values, so save and restart before using changed settings.
 - **Webhook settings:** configure the listener, optional incoming State API,
   authentication, HTTPS, logging, and request limits.
@@ -712,9 +776,9 @@ continue displaying its cached value until it refreshes. Reopening Home can
 reveal No Response, and returning to the fresh state may also take time. This
 is distinct from the physical position and from network/startup failures.
 
-### External actions
+## External actions
 
-Enable **Allow external actions** on a controllable device, save settings and
+Enable **Allow external actions** on a controllable device, click Homebridge’s **Save** and
 restart its bridge. With this option enabled, add `action=on` to an incoming
 webhook to execute the same configured HTTP command as a HomeKit tile change.
 `action=off`, or no action parameter, only reports state. “Off” here disables
@@ -731,7 +795,7 @@ only reports that the tile is on. GET works with UniFi Protect. POST accepts the
 same query parameters and ignores its body (for alarm metadata) after enforcing
 request size/deadline limits. Body fields cannot override the query command.
 Existing listener Basic authentication or the optional global Bearer token applies; the garage/lock JSON State API
-and its token are unchanged. Do not expose command URLs publicly.
+and its token are unchanged. Use HTTPS and authentication for network access.
 
 Each command contains exactly one control field, besides `accessoryId` and
 `action`. Current-state feedback, extra fields and multiple controls are rejected
@@ -772,7 +836,7 @@ command, 403 external actions disabled, and 409 missing outgoing URL.
 A timeout or interrupted response can leave the command outcome unknown.
 Neither the listener nor the reference page automatically retries a command.
 
-### Incoming Bearer authentication
+## Incoming Bearer authentication
 
 Set **Webhook Bearer token** in Webhook settings → Authentication and HTTPS to
 require authentication on incoming reports and actions for every accessory.
@@ -796,7 +860,11 @@ query/body fields cannot disable authentication. External action enablement is
 still required separately. The garage/lock JSON State API continues requiring
 its own `X-Webhooks-Token`, even on a Bearer-exempt accessory.
 
-The API calls page shows placeholder credentials by default. Check **Include Bearer token** to reveal the configured webhook token in the Authorization header and curl examples, including copied text. This option starts unchecked each time the page opens and does not change authentication settings or send a request. Do not share examples containing your token. A disabled Run action button displays the requirement that must be satisfied before testing. Its
-in-page runner loads the saved token on the server, follows per-device opt-outs,
+The API calls page shows placeholder credentials by default. Check **Include
+Bearer token** to reveal the configured webhook token in the Authorization header
+and curl examples, including copied text. This option starts unchecked each time
+the page opens and does not change authentication settings or send a request.
+Do not share examples containing your token. A disabled Run action button displays
+the requirement that must be satisfied before testing. Its in-page runner loads the saved token on the server, follows per-device opt-outs,
 and redacts the token from returned output. Authentication failures return 401
 before any reports or actions run.
