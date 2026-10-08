@@ -3,7 +3,9 @@
 Connect HTTP devices, services, and automations to Apple Home through
 [Homebridge](https://github.com/homebridge/homebridge). Incoming webhooks update
 accessory state, and external programs can optionally run the same configured
-HTTP actions as HomeKit. Optional Bearer authentication protects incoming
+HTTP actions as HomeKit. A device configurator and built-in API reference let
+you set up accessories, copy calls and test requests from Homebridge’s Settings.
+Optional Bearer authentication protects incoming
 state reports and action calls, with exemptions available per accessory.
 
 Supported accessories include sensors, switches, push buttons, doorbells, lights
@@ -22,12 +24,14 @@ The original GPL-3.0 license and attribution are retained. Node.js 18 or newer i
 HTTP Webhooks Plus creates virtual HomeKit accessories whose state can be updated
 by webhooks and whose actions can call your configured URLs. It builds on the
 [original plugin](https://github.com/benzman81/homebridge-http-webhooks) with more
-control over state reporting, HTTP requests, and logging.
+control over state reporting, HTTP requests, security, configuration and logging.
 
 Here's what changes compared with `homebridge-http-webhooks` 0.2.0:
 
 | Situation | Original plugin | HTTP Webhooks Plus |
 | --- | --- | --- |
+| **You want to configure accessories without editing JSON** | Uses the standard configuration form. | Adds a **device configurator** with device cards, grouped settings, validation, masked secrets and Homebridge’s native Save button. |
+| **You need to build or test an integration call** | Requires constructing webhook requests yourself. | Adds an **API calls page for each device** with accepted fields and values, copyable URL/header/curl examples, and explicit test buttons showing HTTP status and response output. |
 | **An external program needs to operate a device** | Incoming webhooks report state or events. | Adds optional **external actions**: `action=on` runs the configured action through the existing HomeKit handler. Omitting it keeps state-report behavior. |
 | **Incoming webhooks need a shared token** | Supports Basic username/password authentication. | Adds optional **Bearer authentication** for incoming reports and actions, with a per-accessory exemption and secure token generation in the UI. |
 | **A garage or lock command succeeds** | Updates HomeKit to the requested state after HTTP success. | Adds optional **external state mode**, which waits for your integration to report the current state. Useful when accepting a command and completing the operation happen at different times. |
@@ -52,6 +56,35 @@ Existing webhook clients can also request richer update responses through the
 Your integration remains responsible for reporting accurate state and controlling
 the hardware. The plugin presents those reports to HomeKit and forwards configured
 actions.
+
+## Configure devices and test calls in Homebridge
+
+Open the plugin’s **Settings** to manage devices through the configurator:
+
+1. Add a device by choosing its type, or open **Edit** on an existing device card.
+2. Enter its ID, name and grouped settings, including outgoing command URLs when
+   needed. Validation highlights missing IDs, duplicate IDs and invalid values.
+3. Click **Apply changes**, then Homebridge’s bottom **Save** button. Restart the
+   child bridge to activate the configuration. The green checkmark indicates
+   that settings are ready to save, not that they have already been saved.
+
+Each device card has an **API calls** button. Its reference page shows the fields
+and accepted values for that device and builds copyable URLs, Authorization
+headers and curl commands. Choose **Report state / event** or **Run action** to
+build the appropriate call; garages and locks also offer JSON state updates and
+status reads. The address defaults to the Homebridge instance’s IP and can be
+changed for examples copied into an external program.
+
+Use **Send state report**, **Send event**, **Run action** or **Read status** to
+send a test request and see its HTTP status and response below the buttons. Tests
+use the saved listener and credentials and require a detected local Homebridge
+address. Save and restart before testing changed settings. Opening the page,
+changing example values or copying a call sends no request. **Run action** can
+operate the configured hardware and requires **Allow external actions** enabled
+for that device. Disabled test buttons show the requirement that needs attention.
+
+For a full walkthrough of the controls and save behavior, see
+[Configuration UI](#configuration-ui).
 
 ## Report state or run an action
 
