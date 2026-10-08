@@ -26,6 +26,8 @@
     }
     group('Device details', ['name', 'id', 'type', 'buttons'], true);
     group('State and feedback', ['state_mode', 'startup_state_policy', 'feedback_timeout_seconds'], true);
+    group('External actions', ['allow_external_actions']);
+    group('Incoming authentication', ['disable_bearer_auth']);
     group('Notifications', ['notification_policy', 'notification_min_interval_ms']);
     group('Obstruction feedback', ['obstruction_monitoring', 'obstruction_timeout_seconds']);
     // Each command keeps its URL, method, headers and payload together.
@@ -42,7 +44,7 @@
   const platformGroups = [
     {title: 'Listener', keys: ['webhook_port', 'webhook_listen_host'], open: true},
     {title: 'Incoming State API', keys: ['state_api_token']},
-    {title: 'Authentication and HTTPS', keys: ['http_auth_user', 'http_auth_pass', 'https', 'https_keyfile', 'https_certfile']},
+    {title: 'Authentication and HTTPS', keys: ['webhook_bearer_token', 'http_auth_user', 'http_auth_pass', 'https', 'https_keyfile', 'https_certfile']},
     {title: 'Logging and request limits', keys: ['log_level', 'extra_redaction_keys', 'webhook_timeout_ms', 'webhook_body_max_bytes', 'state_api_body_max_bytes']},
     {title: 'Advanced and compatibility', keys: ['cache_directory', 'webhook_enable_cors', 'webhook_response_mode']}
   ];
@@ -114,6 +116,7 @@
       if (key === 'buttons' && data[key] !== undefined && (!Array.isArray(data[key]) || data[key].some(item => !isObject(item) || Object.keys(validate(item, schema.items.properties)).length))) errors[key] = 'Repair or remove invalid buttons.';
     }
     if (platform) {
+      if (data.webhook_bearer_token && (data.http_auth_user || data.http_auth_pass)) errors.webhook_bearer_token = 'Choose Bearer authentication or Basic authentication. Clear the Basic user and password to use a Bearer token.';
       for (const [a, b] of [['http_auth_user', 'http_auth_pass'], ['https_keyfile', 'https_certfile']]) {
         if (Boolean(data[a]) !== Boolean(data[b])) errors[data[a] ? b : a] = 'Supply both fields in this pair, or leave both empty.';
       }

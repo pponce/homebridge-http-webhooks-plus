@@ -24,7 +24,7 @@ before(async () => {
   fs.mkdirSync(artifacts, {recursive: true});
   server = http.createServer((req, res) => {
     const file = req.url === '/' ? 'index.html' : req.url.slice(1);
-    if (!['index.html', 'index.js', 'model.js', 'api.js', 'styles.css'].includes(file)) { res.writeHead(404).end(); return; }
+    if (!['index.html', 'index.js', 'model.js', 'actions.js', 'api.js', 'styles.css'].includes(file)) { res.writeHead(404).end(); return; }
     res.setHeader('Content-Type', (file.endsWith('.css') ? 'text/css' : file.endsWith('.js') ? 'text/javascript' : 'text/html') + '; charset=utf-8');
     if (file !== 'index.html') { res.end(fs.readFileSync(path.join(root, file))); return; }
     res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + fs.readFileSync(path.join(root, file), 'utf8') + '</body></html>');
@@ -275,3 +275,48 @@ test('API reference detects the server address and sends only on click with resp
   await context.close();
 });
 
+test('API reference action choice adds execution flag only in command mode and executes only on click', async () => {
+  const initial=structuredClone(fixture);initial[1].lights[0].allow_external_actions=true;
+  const {page,context,errors}=await pageFor(initial);
+  await page.getByRole('button',{name:'API calls for Desk light',exact:true}).click();
+  assert.doesNotMatch(await page.locator('.api-examples').textContent(),/action=on/);
+  await page.locator('#api-format').selectOption('action');
+  assert.match(await page.locator('.api-examples').textContent(),/action=on&state=true/);
+  assert.equal(await page.locator('#api-value').isVisible(),false);
+  assert.equal(await page.locator('#api-execute').textContent(),'Run action');
+  assert.equal(await page.evaluate(()=>mock.requests.length),0);
+  await page.locator('#api-call').selectOption('1');
+  assert.match(await page.locator('.api-examples').textContent(),/action=on&state=false/);
+  await page.locator('#api-execute').click();
+  await page.waitForFunction(()=>document.querySelector('#api-output').textContent.startsWith('HTTP 200'));
+  assert.equal(await page.evaluate(()=>mock.requests[0].payload.format),'action');
+  assert.equal(await page.evaluate(()=>mock.requests[0].payload.field),'off');
+  await page.locator('#api-call').selectOption('2');
+  await page.locator('#api-value').fill('45');
+  assert.match(await page.locator('.api-examples').textContent(),/action=on&value=45/);
+  await page.locator('#api-format').selectOption('webhook');
+  assert.doesNotMatch(await page.locator('.api-examples').textContent(),/action=on/);
+  assert.equal(await page.evaluate(()=>mock.requests.length),1);
+  await screenshot(page,'api-light-compact-fields');
+  assert.deepEqual(errors,[]);await context.close();
+  const disabled=await pageFor();
+  await disabled.page.getByRole('button',{name:'API calls for Desk light',exact:true}).click();
+  await disabled.page.locator('#api-format').selectOption('action');
+  assert.equal(await disabled.page.locator('#api-execute').isDisabled(),true);
+  assert.equal(await disabled.page.evaluate(()=>mock.requests.length),0);
+  await disabled.context.close();
+});
+test('API reference Bearer examples use placeholders and follow saved per-device exemptions', async () => {
+  const initial=structuredClone(fixture);initial[1].webhook_bearer_token='synthetic_bearer_0123456789abcdef0123456789';
+  initial[1].lights[0].disable_bearer_auth=true;
+  const {page,context,errors}=await pageFor(initial);
+  await page.getByRole('button',{name:'API calls for Hall motion',exact:true}).click();
+  assert.match(await page.locator('.api-examples').textContent(),/Authorization: Bearer YOUR_WEBHOOK_TOKEN/);
+  assert.doesNotMatch(await page.locator('#api-reference').textContent(),/synthetic_bearer/);
+  const column=await page.locator('.api-table th').first().boundingBox();assert.ok(column.width<=130);
+  await page.locator('#back-api').click();
+  await page.getByRole('button',{name:'API calls for Desk light',exact:true}).click();
+  assert.doesNotMatch(await page.locator('.api-examples').textContent(),/Authorization/);
+  assert.equal(await page.evaluate(()=>mock.requests.length),0);
+  assert.deepEqual(errors,[]);await context.close();
+});

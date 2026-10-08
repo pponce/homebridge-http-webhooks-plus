@@ -1,3 +1,18 @@
+## 0.7.0
+
+- Add opt-in external action execution for every controllable accessory family.
+  Use `action=on` with one supported state/target/value query parameter to run
+  the existing HomeKit SET handler. Omitted `action` or `action=off` preserves
+  state-report behavior. Incoming authentication remains unchanged.
+- Add optional global Bearer authentication for incoming reports and actions,
+  with per-device opt-out. Basic authentication remains available as an alternative.
+- Add Run action examples, accepted values and explicit execution in API calls.
+  Sensor, stateless-button and doorbell reports remain events/state only.
+- Validate commands before changing state; reject unsupported fields, disabled
+  controls, ambiguous requests, missing URLs and invalid values. No retries.
+- Reduce the API reference Field column to about ten characters, wrapping long
+  names without hiding them.
+
 ## 0.6.3
 
 - Default API example addresses to the Homebridge instance's detected IP or

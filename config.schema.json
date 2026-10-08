@@ -127,6 +127,12 @@
               ],
               "default": "inherit",
               "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -261,6 +267,18 @@
               "type": "string",
               "title": "Off Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -366,6 +384,18 @@
               "type": "string",
               "title": "Push Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -422,6 +452,12 @@
               ],
               "default": "inherit",
               "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -596,6 +632,18 @@
               "type": "string",
               "title": "Brightness Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -647,6 +695,12 @@
               ],
               "default": "inherit",
               "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -799,6 +853,18 @@
               "type": "string",
               "title": "Set Target Heating Cooling State Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -933,6 +999,18 @@
               "type": "string",
               "title": "Off Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -1038,6 +1116,18 @@
               "type": "string",
               "title": "Set State Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -1238,6 +1328,18 @@
               "type": "string",
               "title": "Close Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           },
           "ui:order": [
@@ -1264,7 +1366,9 @@
             "log_level",
             "max_redirects",
             "open_form",
-            "close_form"
+            "close_form",
+            "allow_external_actions",
+            "disable_bearer_auth"
           ]
         },
         "minItems": 0,
@@ -1342,6 +1446,12 @@
               ],
               "default": "inherit",
               "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -1598,6 +1708,18 @@
               "type": "string",
               "title": "Close Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -1779,6 +1901,18 @@
               "type": "string",
               "title": "Close Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -2113,6 +2247,18 @@
               "type": "string",
               "title": "Rotation Direction Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -2257,6 +2403,18 @@
               "type": "string",
               "title": "Off Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
+            },
+            "allow_external_actions": {
+              "title": "Allow external actions",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow action commands from external programs to execute this device\u2019s configured HTTP actions."
+            },
+            "disable_bearer_auth": {
+              "title": "Disable Bearer authentication for this device",
+              "type": "boolean",
+              "default": false,
+              "description": "Allow this device\u2019s incoming requests without the global webhook Bearer token. The JSON State API token remains required."
             }
           }
         },
@@ -2334,6 +2492,15 @@
         "default": 8192,
         "minimum": 1024,
         "maximum": 65536
+      },
+      "webhook_bearer_token": {
+        "title": "Webhook Bearer token",
+        "type": "string",
+        "format": "password",
+        "minLength": 32,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9_-]{32,256}$",
+        "description": "Require this token for incoming state reports and external actions. Choose Bearer or Basic authentication. Leave empty to disable Bearer authentication."
       }
     },
     "ui:order": [
@@ -2341,6 +2508,7 @@
       "webhook_listen_host",
       "webhook_enable_cors",
       "cache_directory",
+      "webhook_bearer_token",
       "http_auth_user",
       "http_auth_pass",
       "https",

@@ -53,6 +53,7 @@
     if (key === 'id') return 'Unique across all devices. Keep this unchanged to preserve webhook URLs and accessory identity.';
     if (key === 'webhook_port') return 'The port clients use to send webhooks. Default: 51828.';
     if (key === 'webhook_listen_host') return 'Leave empty to listen on all interfaces (::).';
+    if (key === 'webhook_bearer_token') return 'Optional shared Bearer token for all incoming reports and actions. Use a random 32–256 character token. Individual devices can opt out. Choose Bearer or Basic authentication.';
     if (key === 'state_api_token') return 'Optional credential for incoming garage and lock state reports. Use 32–256 letters, numbers, underscores, or hyphens. It can stay configured even if all garages and locks are removed.';
     if (key === 'http_auth_pass') return 'Provide both an HTTP auth user and password, or leave both empty.';
     if (key === 'rejectUnauthorized') return 'Verify the certificate of outgoing HTTPS requests. The default is enabled.';
@@ -64,7 +65,7 @@
   function field(key, schema, target, controls, prefix, onChange) {
     if (key === 'buttons') return buttonsField(schema, target, controls, prefix, onChange);
     const wrapper = node('div', 'field');
-    if (/(_url|_headers|_body|_form)$/.test(key) || ['state_api_token', 'extra_redaction_keys'].includes(key)) wrapper.classList.add('wide');
+    if (/(_url|_headers|_body|_form)$/.test(key) || ['state_api_token', 'webhook_bearer_token', 'extra_redaction_keys'].includes(key)) wrapper.classList.add('wide');
     const id = prefix + '-' + key;
     const label = node('label', '', key === 'rejectUnauthorized' ? 'Verify HTTPS certificates' : schema.title || key);
     label.htmlFor = id;

@@ -15,6 +15,7 @@ function Server(ServiceParam, CharacteristicParam, platform, platformConfig) {
   this.platform = platform;
   this.log = platform.log;
   this.storage = platform.storage;
+  this.actionApi = new (require('./ActionApi'))(platformConfig, CharacteristicParam);
 
   const port = platformConfig.webhook_port === undefined || platformConfig.webhook_port === '' ? Constants.DEFAULT_PORT : platformConfig.webhook_port;
   if (!/^[0-9]+$/.test(String(port)) || Number(port) < 1 || Number(port) > 65535) throw new StateError('invalid_config_webhook_port');
@@ -35,6 +36,10 @@ function Server(ServiceParam, CharacteristicParam, platform, platformConfig) {
     throw new StateError('incomplete_or_invalid_basic_auth');
   }
   this.stateApiToken = platformConfig.state_api_token;
+  this.bearerToken = platformConfig.webhook_bearer_token === '' ? undefined : platformConfig.webhook_bearer_token;
+  if (this.bearerToken !== undefined && (typeof this.bearerToken !== 'string' ||
+      !/^[A-Za-z0-9_-]{32,256}$/.test(this.bearerToken))) throw new StateError('invalid_config_webhook_bearer_token');
+  if (this.bearerToken && this.httpAuthUser !== null) throw new StateError('choose_basic_or_bearer_auth');
   if (this.stateApiToken !== undefined && (typeof this.stateApiToken !== 'string' ||
       !/^[A-Za-z0-9_-]{32,256}$/.test(this.stateApiToken))) throw new StateError('invalid_config_state_api_token');
   this.platform.webhookResponseMode = choice(platformConfig.webhook_response_mode, 'legacy', ['legacy', 'applied'], 'webhook_response_mode');
@@ -124,7 +129,7 @@ Server.prototype.createServerCallback = function() {
       response.writeHead(status, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'});
       response.end(JSON.stringify(value), () => { if (status >= 400) request.socket?.destroy(); });
     };
-    const failure = error => { response.setHeader('Connection', 'close'); finish(error instanceof StateError ? error.status : 500,
+    const failure = error => { if (ended) return; response.setHeader('Connection', 'close'); finish(error instanceof StateError ? error.status : 500,
       {success: false, error: error instanceof StateError ? error.code : 'internal_error'}); };
     response.on('error', () => { ended = true; clearTimeout(timer); });
     response.on('close', () => { ended = true; clearTimeout(timer); });
@@ -146,8 +151,18 @@ Server.prototype.createServerCallback = function() {
           throw new StateError('authentication_required', 401);
         }
       }
+      if (this.bearerToken) {
+        let id = parsed.query.accessoryId;
+        const route = /^\/v1\/accessories\/([^/]+)(?:\/state)?$/.exec(parsed.pathname);
+        if (route) {try {id = decodeURIComponent(route[1]);} catch (_) {id = undefined;}}
+        const exempt = this.actionApi.devices.get(id)?.device.disable_bearer_auth === true;
+        if (!exempt && !equalSecret(request.headers.authorization, 'Bearer ' + this.bearerToken)) {
+          response.setHeader('WWW-Authenticate', 'Bearer realm="HttpWebHooks"');
+          throw new StateError('authentication_required', 401);
+        }
+      }
       const isV1 = parsed.pathname.startsWith('/v1/');
-      let accessory, stateWrite = false;
+      let accessory, stateWrite = false, runAction;
       if (isV1) {
         if (!this.stateApiToken || !equalSecret(request.headers['x-webhooks-token'], this.stateApiToken)) throw new StateError('state_api_authentication_required', 401);
         const route = /^\/v1\/accessories\/([^/]+)(\/state)?$/.exec(parsed.pathname);
@@ -165,6 +180,11 @@ Server.prototype.createServerCallback = function() {
         if (typeof parsed.query.accessoryId !== 'string' || !parsed.query.accessoryId) throw new StateError('accessory_not_found', 404);
         accessory = this.byId.get(parsed.query.accessoryId);
         if (!accessory) throw new StateError('accessory_not_found', 404);
+        if (Object.hasOwn(parsed.query, 'action')) {
+          if (!['on', 'off'].includes(parsed.query.action)) throw new StateError('invalid_action');
+          if (parsed.query.action === 'on') runAction = this.actionApi.prepare(accessory, parsed.query);
+          else delete parsed.query.action;
+        }
       }
       let size = 0; const chunks = [], limit = isV1 ? this.stateBodyLimit : this.bodyLimit;
       timer = setTimeout(() => { response.setHeader('Connection', 'close'); finish(408, {success: false, error: 'request_timeout'}); request.resume(); }, this.deadline);
@@ -177,7 +197,11 @@ Server.prototype.createServerCallback = function() {
       request.on('end', () => {
         if (ended) return;
         try {
-          if (isV1) {
+          if (runAction) {
+            // Alarm POST bodies contain UniFi event metadata; commands live in the query.
+            // The request must finish within size/deadline limits before executing.
+            runAction().then(result => finish(200, result), failure);
+          } else if (isV1) {
             if (!stateWrite && size) throw new StateError('status_body_not_allowed');
             const result = stateWrite ? accessory.apply(bodyObject(Buffer.concat(chunks).toString('utf8'))) : accessory.status();
             finish(result.success ? 200 : 503, result);

@@ -3,6 +3,8 @@ const test=require('node:test');const assert=require('node:assert/strict');const
 const Garage=require('../src/homekit/accessories/HttpWebHookGarageDoorOpenerAccessory');
 const Lock=require('../src/homekit/accessories/HttpWebHookLockMechanismAccessory');
 const Command=require('../src/CommandRequest');
+const ActionApi=require('../src/ActionApi');
+const Actions=require('../homebridge-ui/public/actions');
 const variants=['hap-nodejs'];if(Number(process.versions.node.split('.')[0])>=22)variants.push('@homebridge/hap-nodejs');
 for(const moduleName of variants){
  const hap=require(moduleName);
@@ -70,5 +72,40 @@ for (const moduleName of variants) test(moduleName+' legacy families preserve se
   let calls=0;t.mock.method(Command,'send',(_o,cb)=>{calls++;cb(null);return ()=>{};});
   await new Promise((resolve,reject)=>a[method](true,e=>e?reject(e):resolve()));assert.equal(calls,1);
   await new Promise((resolve,reject)=>a[method](false,e=>e?reject(e):resolve(),require('../src/Constants').CONTEXT_FROM_WEBHOOK));assert.equal(calls,1);
+ }
+});
+for (const moduleName of variants) test(moduleName+' external actions use every actual HomeKit SET handler and preserve report isolation', async t => {
+ const hap=require(moduleName), dir=fs.mkdtempSync(path.join(os.tmpdir(),'webhooks-actions-'));
+ t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const values=new Map(), platform={cacheDirectory:path.join(dir,'storage'),log:Object.assign(()=>{},{debug(){},info(){},warn(){},error(){}}),
+  storage:{getItemSync:key=>values.get(key),setItemSync:(key,value)=>values.set(key,value)}};
+ const families={switches:'Switch',outlets:'Outlet',lights:'LightBulb',valves:'Valve',pushbuttons:'PushButton',
+  garagedooropeners:'GarageDoorOpener',lockmechanisms:'LockMechanism',windowcoverings:'WindowCovering',thermostats:'Thermostat',security:'Security',fanv2s:'Fanv2'};
+ const sent=[];t.mock.method(Command,'send',(options,callback)=>{sent.push(options);callback(null);return ()=>{};});
+ for (const [family,name] of Object.entries(families)) {
+  const config={id:family,name:'Test '+family,allow_external_actions:true,enableLockPhysicalControls:true,enableTargetStateControls:true,enableSwingModeControls:true,
+   ...(family==='garagedooropeners'||family==='lockmechanisms'?{state_mode:'external'}:{})};
+  const fields=Actions.fields(family,config);
+  for (const field of fields) if(field.urlKey) {config[field.urlKey]='http://command.example/'+field.urlKey;config[field.urlKey.replace(/_url$/,'_method')]='POST';config[field.urlKey.replace(/_url$/,'_body')]='synthetic';}
+  config.open_40_url='http://command.example/open_40_url';config.open_40_method='POST';config.open_40_body='synthetic';
+  const Kind=require('../src/homekit/accessories/HttpWebHook'+name+'Accessory');
+  const accessory=new Kind(hap.Service,hap.Characteristic,platform,config);
+  if(accessory.close)t.after(()=>accessory.close());
+  const runtime=new ActionApi({[family]:[config]},hap.Characteristic);
+  for (const field of fields) {
+   const before=sent.length, value=field.fixedValue ?? field.sample;
+   await runtime.prepare(accessory,{accessoryId:family,action:'on',[Actions.parameter(field)]:Object.hasOwn(field,'fixedValue')?Actions.inputValue(field):String(value)})();
+   assert.equal(sent.length,before+1,family+' '+field.key);
+   assert.equal(sent.at(-1).url.href,Actions.commandURL(field,value,config));
+   assert.equal(sent.at(-1).method,'POST');assert.equal(sent.at(-1).body,'synthetic');
+   assert.equal(accessory.service.getCharacteristic(hap.Characteristic[field.characteristic]).value,value);
+  }
+  const before=sent.length;
+  if(['switches','outlets','lights','valves'].includes(family))accessory.changeFromServer({state:'true'});
+  if(['garagedooropeners','lockmechanisms'].includes(family)) {
+   assert.equal(accessory.status().availability.currentState,'awaiting_feedback');
+   accessory.apply({currentState:1});assert.equal(accessory.values.currentState,1);
+  }
+  assert.equal(sent.length,before,'state reports must not execute');
  }
 });

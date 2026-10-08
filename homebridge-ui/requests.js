@@ -3,6 +3,7 @@ const os = require('node:os');
 const http = require('node:http');
 const https = require('node:https');
 const Api = require('./public/api');
+const Actions = require('./public/actions');
 const Model = require('./public/model');
 
 function connectionInfo(interfaces = os.networkInterfaces(), hostname = os.hostname()) {
@@ -26,13 +27,18 @@ function prepare(config, payload, network = connectionInfo()) {
   const host = String(payload.host || '').trim().replace(/^\[|\]$/g, '');
   const local = new Set([...network.addresses, network.hostname, 'localhost', '127.0.0.1', '::1']);
   if (!local.has(host)) throw Error('In-page testing is available for this Homebridge instance. Use its detected IP address, or copy the request to test from your external program.');
-  if (!['webhook', 'json', 'status'].includes(payload.format)) throw Error('Unsupported request format.');
-  const json = payload.format !== 'webhook';
+  if (!['webhook', 'json', 'status', 'action'].includes(payload.format)) throw Error('Unsupported request format.');
+  const action = payload.format === 'action';
+  if (action && device.allow_external_actions !== true) throw Error('Enable Allow external actions, save settings and restart the child bridge first.');
+  const json = ['json','status'].includes(payload.format);
   if (json && (!['garagedooropeners', 'lockmechanisms'].includes(payload.family) || !platform.state_api_token)) throw Error('Enable the incoming JSON State API, save settings and restart the child bridge first.');
-  const fields = Api.fields(payload.family, device);
+  const fields = action ? Actions.fields(payload.family, device) : Api.fields(payload.family, device);
   const field = fields.find(item => item.key === payload.field && (!item.params || item.params.buttonName === payload.buttonName));
   if (!field) throw Error('This field or button is not supported by the saved device.');
-  if (payload.format !== 'status') {
+  if (action) {
+    const target = Actions.value(field, Object.hasOwn(field, 'fixedValue') ? undefined : payload.value);
+    if (!Actions.commandURL(field, target, device)) throw Error('Configure this action’s outgoing URL first.');
+  } else if (payload.format !== 'status') {
     if (typeof payload.value !== 'string' || !payload.value || payload.value.length > 64) throw Error('Choose a valid value.');
     if (field.values) {
       if (!field.values.some(item => item[0] === payload.value)) throw Error('Choose an enabled value or event.');
@@ -45,17 +51,18 @@ function prepare(config, payload, network = connectionInfo()) {
   const listenHost = platform.webhook_listen_host || '::';
   const destination = ['::', '0.0.0.0'].includes(listenHost) ? '127.0.0.1' : listenHost;
   const address = destination.includes(':') ? '[' + destination.replace(/^\[|\]$/g, '') + ']' : destination;
-  const generated = Api.build(platform, device, payload.family, field, payload.value, address, json, payload.fanPower, payload.notify === true);
+  const generated = action ? Api.buildAction(platform, device, field, payload.value, address) : Api.build(platform, device, payload.family, field, payload.value, address, json, payload.fanPower, payload.notify === true);
   const endpoint = new URL(payload.format === 'status' ? generated.endpoint.replace(/\/state$/, '') : generated.endpoint);
   const headers = {Accept: 'application/json'};
-  if (platform.http_auth_user && platform.http_auth_pass) headers.Authorization = 'Basic ' + Buffer.from(platform.http_auth_user + ':' + platform.http_auth_pass).toString('base64');
+  if (platform.webhook_bearer_token) {if (device.disable_bearer_auth !== true) headers.Authorization = 'Bearer ' + platform.webhook_bearer_token;}
+  else if (platform.http_auth_user && platform.http_auth_pass) headers.Authorization = 'Basic ' + Buffer.from(platform.http_auth_user + ':' + platform.http_auth_pass).toString('base64');
   if (json) headers['X-Webhooks-Token'] = platform.state_api_token;
   const body = payload.format === 'json' ? generated.body : null;
   if (body) {headers['Content-Type'] = 'application/json'; headers['Content-Length'] = Buffer.byteLength(body);}
   return {endpoint, headers, body, method: body ? 'POST' : 'GET', platform};
 }
 function redactResponse(text, platform) {
-  const secrets = [platform.http_auth_user, platform.http_auth_pass, platform.state_api_token,
+  const secrets = [platform.http_auth_user, platform.http_auth_pass, platform.state_api_token, platform.webhook_bearer_token,
     platform.http_auth_user && platform.http_auth_pass ? Buffer.from(platform.http_auth_user + ':' + platform.http_auth_pass).toString('base64') : null].filter(Boolean);
   let result = text;
   for (const secret of secrets) result = result.split(secret).join('[redacted]');
@@ -74,7 +81,7 @@ async function execute(config, payload, network) {
       let size = 0; const chunks = [];
       response.on('data', chunk => {
         size += chunk.length;
-        if (size > 65536) {finish({error: 'Response exceeded 64 KiB. The report may already have been applied; do not retry automatically.'}); req.destroy(); return;}
+        if (size > 65536) {finish({error: 'Response exceeded 64 KiB. The request may already have been applied; do not retry automatically.'}); req.destroy(); return;}
         chunks.push(chunk);
       });
       response.on('end', () => {
@@ -82,9 +89,9 @@ async function execute(config, payload, network) {
         try {body = JSON.stringify(JSON.parse(body), null, 2);} catch (_) {}
         finish({status: response.statusCode, body});
       });
-      response.on('error', () => finish({error: 'The listener response was interrupted. The report may already have been applied.'}));
+      response.on('error', () => finish({error: 'The listener response was interrupted. The request may already have been applied.'}));
     });
-    const timer = setTimeout(() => {finish({error: 'The listener did not respond within 10 seconds. The report may already have been applied.'}); req.destroy();}, 10000);
+    const timer = setTimeout(() => {finish({error: 'The listener did not respond within 10 seconds. The request may already have been applied.'}); req.destroy();}, 10000);
     req.on('error', () => finish({error: 'Could not reach the saved webhook listener. Check that the child bridge is running and the saved listener settings have been applied.'}));
     if (request.body) req.write(request.body);
     req.end();

@@ -1,5 +1,6 @@
 (function (root) {
   'use strict';
+  const Actions = typeof module === 'object' && module.exports ? require('./actions') : root.WebhooksActions;
   const enumField = (key, label, values, extra = {}) => ({key, label, values, ...extra});
   const numberField = (key, label, min, max, sample, step = 'any') => ({key, label, min, max, sample, step});
   const power = () => enumField('state', 'Power', [['true', 'On'], ['false', 'Off']]);
@@ -68,7 +69,7 @@
   }
   function build(platform, device, family, field, value, host, json = false, fanPower = 'false', notify = false) {
     const base = origin(platform, host);
-    const auth = platform.http_auth_user && platform.http_auth_pass ? ' --user ' + quote('YOUR_HTTP_USER:YOUR_HTTP_PASSWORD') : '';
+    const auth = authentication(platform, device);
     let endpoint, body;
     if (json) {
       endpoint = base + '/v1/accessories/' + encode(device.id) + '/state';
@@ -87,6 +88,18 @@
     return {endpoint, body: bodyText, curl: 'curl --request ' + (json ? 'POST' : 'GET') + auth + token +
       (json ? ' --header ' + quote('Content-Type: application/json') + ' --data ' + quote(bodyText) : '') + ' ' + quote(endpoint)};
   }
+  function buildAction(platform, device, field, value, host) {
+    Actions.value(field, Object.hasOwn(field, 'fixedValue') ? undefined : value);
+    const params = {accessoryId: String(device.id), action: 'on'};
+    params[Actions.parameter(field)] = Object.hasOwn(field, 'fixedValue') ? Actions.inputValue(field) : value;
+    const endpoint = origin(platform, host) + '/?' + Object.entries(params).map(([key, item]) => encode(key) + '=' + encode(item)).join('&');
+    const auth = authentication(platform, device);
+    return {endpoint, body: null, curl: 'curl --request GET' + auth + ' ' + quote(endpoint)};
+  }
+  function authentication(platform, device) {
+    if (platform.webhook_bearer_token) return device.disable_bearer_auth === true ? '' : ' --header ' + quote('Authorization: Bearer YOUR_WEBHOOK_TOKEN');
+    return platform.http_auth_user && platform.http_auth_pass ? ' --user ' + quote('YOUR_HTTP_USER:YOUR_HTTP_PASSWORD') : '';
+  }
   function defaultHost(platform, network = {}, browserHost = '') {
     const bound = platform.webhook_listen_host;
     const browserAddress = browserHost.replace(/^\[|\]$/g, '');
@@ -99,9 +112,13 @@
   function render(container, family, device, platform, homebridge, settings = {}) {
     const el = (tag, text, className) => { const result = document.createElement(tag); if (text !== undefined) result.textContent = text; if (className) result.className = className; return result; };
     const refreshHeight = () => homebridge.fixScrollHeight();
-    const options = fields(family, device).filter(field => !field.values || field.values.length);
+    const reportOptions = fields(family, device).filter(field => !field.values || field.values.length);
+    const actionOptions = Actions.fields(family, device);
+    let options = reportOptions;
     container.replaceChildren();
-    container.append(el('p', 'These calls report state to HomeKit. They do not call the device’s outgoing command URLs. Button and doorbell events can run automations configured in Home.', 'notice'));
+    container.append(el('p', 'State reports update HomeKit without executing outgoing commands. Run action executes the same configured action as HomeKit. Button and doorbell reports can run Home automations.', 'notice'));
+    if (actionOptions.length) container.append(el('p', device.allow_external_actions === true ? 'External actions are enabled for this device. Commands use the listener’s existing authentication.' : 'To run commands, enable Allow external actions for this device, save settings and restart the child bridge.', 'field-help'));
+    else container.append(el('p', 'This device reports sensor readings or events and has no outgoing commands. Use a Home automation to act on its reports.', 'field-help'));
     container.append(el('p', 'Examples use the current settings shown in this configuration. Save changes and restart the child bridge before using changed IDs or connection settings.', 'field-help'));
     const grid = el('div', undefined, 'field-grid api-controls');
     function control(labelText, input) { const wrapper = el('div', undefined, 'field'); const label = el('label', labelText); label.htmlFor = input.id; wrapper.append(label, input); grid.append(wrapper); return input; }
@@ -111,11 +128,12 @@
     const listenHost = platform.webhook_listen_host;
     if (listenHost === '127.0.0.1' || listenHost === '::1' || listenHost === 'localhost') container.append(el('p', 'The listener is bound to loopback. Calls must originate on the Homebridge machine unless you configure a reachable listener or proxy.', 'notice'));
     const jsonSupported = ['garagedooropeners', 'lockmechanisms'].includes(family);
-    if (platform.http_auth_user && platform.http_auth_pass) container.append(el('p', 'Basic authentication is required. Replace YOUR_HTTP_USER and YOUR_HTTP_PASSWORD in the curl example. Saved credentials are never included.', 'field-help'));
+    if (platform.webhook_bearer_token && device.disable_bearer_auth !== true) container.append(el('p', 'Bearer authentication is required. In UniFi choose Bearer and enter your webhook token, or add Authorization: Bearer YOUR_WEBHOOK_TOKEN. Saved credentials are never included.', 'field-help'));
+    else if (!platform.webhook_bearer_token && platform.http_auth_user && platform.http_auth_pass) container.append(el('p', 'Basic authentication is required. Replace YOUR_HTTP_USER and YOUR_HTTP_PASSWORD in the curl example. Saved credentials are never included.', 'field-help'));
     else container.append(el('p', 'These webhook calls do not require authentication with the current settings.', 'field-help'));
     if (!options.length) { container.append(el('p', 'No supported calls are available. Choose a supported sensor type or configure a button with at least one enabled press event.', 'notice')); return; }
     const method = el('select'); method.id = 'api-format';
-    for (const [value, label] of [['webhook', 'Webhook · GET with query parameters'], ...(jsonSupported ? [['json', 'JSON State API · POST']] : [])]) { const option = el('option', label); option.value = value; method.append(option); }
+    for (const [value, label] of [['webhook', 'Report state / event · GET'], ...(jsonSupported ? [['json', 'JSON State API · POST']] : []), ...(actionOptions.length ? [['action', 'Run action · GET']] : [])]) { const option = el('option', label); option.value = value; method.append(option); }
     control('Request format', method);
     const call = el('select'); call.id = 'api-call'; options.forEach((field, index) => {const option = el('option', field.label); option.value = index; call.append(option);});
     control('State or event to report', call);
@@ -123,9 +141,11 @@
     let value;
     function chooseValue() {
       const field = options[Number(call.value)];
+      const fixed = Object.hasOwn(field, 'fixedValue');
+      valueWrapper.hidden = fixed;
       value = el(field.values ? 'select' : 'input'); value.id = 'api-value';
       if (field.values) field.values.forEach(([item, label]) => {const option = el('option', item + ' · ' + label); option.value = item; value.append(option);});
-      else {value.type = 'number'; value.min = field.min; value.max = field.max; value.step = field.step; value.value = field.sample;}
+      else if (!fixed) {value.type = 'number'; value.min = field.min; value.max = field.max; value.step = field.step; value.value = field.sample;}
       const label = el('label', 'Value'); label.htmlFor = value.id; valueWrapper.replaceChildren(label, value);
       value.addEventListener(field.values ? 'change' : 'input', update);
     }
@@ -138,20 +158,25 @@
     if (jsonSupported) container.append(el('p', 'Current and target states are independent reports. Updating a target does not issue an open/close or lock/unlock command. Obstruction accepts true/false or 1/0. Repeat notifications require “Allow explicit notifications” and remain rate limited.', 'field-help'));
     const tableWrap = el('div', undefined, 'api-table-wrap');
     const table = el('table', undefined, 'api-table'); const header = el('tr'); ['Field', 'Accepted values'].forEach(text => header.append(el('th', text))); const thead = el('thead'); thead.append(header); table.append(thead);
-    const tbody = el('tbody'); for (const field of options) {const row = el('tr'); row.append(el('td', field.key + (field.jsonKey ? ' / JSON: ' + field.jsonKey : '')),
-      el('td', field.label + ': ' + (field.values ? field.values.map(([item, label]) => item + ' = ' + label).join('; ') : field.min + '–' + field.max + (field.step === 1 ? ' (integer)' : ' (number)')) + (field.note ? '. ' + field.note : ''))); tbody.append(row);} table.append(tbody); tableWrap.append(table); container.append(tableWrap);
+    const tbody = el('tbody');
+    function renderTable() {
+      tbody.replaceChildren();
+      for (const field of options) {const row = el('tr'); row.append(el('td', (method.value === 'action' ? Actions.parameter(field) : field.key) + (field.jsonKey ? ' / JSON: ' + field.jsonKey : '')),
+        el('td', field.label + ': ' + (Object.hasOwn(field, 'fixedValue') ? Actions.inputValue(field) : field.values ? field.values.map(([item, label]) => item + ' = ' + label).join('; ') : field.min + '–' + field.max + (field.step === 1 ? ' (integer)' : ' (number)')) + (field.note ? '. ' + field.note : ''))); tbody.append(row);}
+    }
+    renderTable(); table.append(tbody); tableWrap.append(table); container.append(tableWrap);
     const status = el('p', undefined, 'notice'); status.setAttribute('role', 'status'); status.hidden = true; container.append(status);
     const examples = el('div', undefined, 'api-examples'); container.append(examples);
     const runner = el('section', undefined, 'api-runner');
     const send = el('button', 'Send state report', 'primary'); send.type = 'button'; send.id = 'api-execute';
     const read = el('button', 'Read status', 'secondary'); read.type = 'button'; read.id = 'api-read-status';
     const runButtons = el('div', undefined, 'editor-actions'); runButtons.append(send, read); runner.append(runButtons);
-    runner.append(el('p', 'Sends the displayed report to this Homebridge instance using saved credentials. Button and doorbell reports can trigger your Home automations. No request is sent until you click a button.', 'field-help'));
+    runner.append(el('p', 'Sends the displayed request using saved credentials. Run action can operate real hardware. No request is sent until you click a button. Commands are never retried automatically.', 'field-help'));
     const output = el('pre', undefined, 'api-output'); output.id = 'api-output'; output.setAttribute('role', 'status'); output.hidden = true; runner.append(output); container.append(runner);
     let executing = false, valid = false;
     async function run(format) {
       if (executing || !valid) return;
-      const field = options[Number(call.value)];
+      const field = format === 'status' ? reportOptions[0] : options[Number(call.value)];
       const payload = {family, id: String(device.id), port: String(platform.webhook_port || '51828'), https: platform.https === true,
         host:host.value, format, field:field.key, buttonName:field.params?.buttonName, value:value.value, fanPower:fan.value, notify:notify.checked};
       executing = true; send.disabled = true; read.disabled = true;
@@ -171,9 +196,10 @@
       const local = network && [...network.addresses, network.hostname, 'localhost', '127.0.0.1', '::1'].includes(localHost);
       const available = Boolean(local && settings.canExecute && typeof homebridge.request === 'function' && valid);
       send.disabled = executing || !available || (method.value === 'json' && !platform.state_api_token);
+      if (method.value === 'action' && device.allow_external_actions !== true) send.disabled = true;
       read.disabled = executing || !available || !platform.state_api_token;
       read.hidden = !jsonSupported;
-      send.textContent = ['doorbells','statelessswitches','pushbuttons'].includes(family) ? 'Send event' : 'Send state report';
+      send.textContent = method.value === 'action' ? 'Run action' : ['doorbells','statelessswitches','pushbuttons'].includes(family) ? 'Send event' : 'Send state report';
       runner.title = !settings.canExecute ? 'Save settings and restart the child bridge before testing changed settings.' : !local ? 'Use this Homebridge instance’s detected IP address for in-page testing.' : '';
     }
     async function copy(text, button) {
@@ -190,28 +216,36 @@
       valid = false;
       const field = options[Number(call.value)];
       try {
-        if (!value.checkValidity() || value.value === '' || (field.values && !field.values.some(item => item[0] === value.value))) throw Error('Choose a valid value within the accepted range.');
+        if (!Object.hasOwn(field, 'fixedValue') && (!value.checkValidity() || value.value === '' || (field.values && !field.values.some(item => item[0] === value.value)))) throw Error('Choose a valid value within the accepted range.');
         const json = method.value === 'json';
         if (json && !platform.state_api_token) {status.textContent = 'The JSON State API is disabled. Configure a token in Webhook settings → Incoming State API, save and restart the child bridge. Examples below use a placeholder.'; status.hidden = false;}
-        const request = build(platform, device, family, field, value.value, host.value, json, fan.value, notify.checked);
+        const request = method.value === 'action' ? buildAction(platform, device, field, value.value, host.value) : build(platform, device, family, field, value.value, host.value, json, fan.value, notify.checked);
         valid = true;
         example('URL', request.endpoint); example('curl', request.curl); if (request.body) example('JSON body', request.body);
         if (json) {
           const endpoint = request.endpoint.replace(/\/state$/, '');
-          example('Read status', 'curl --request GET' + (platform.http_auth_user && platform.http_auth_pass ? ' --user ' + quote('YOUR_HTTP_USER:YOUR_HTTP_PASSWORD') : '') + ' --header ' + quote('X-Webhooks-Token: YOUR_STATE_API_TOKEN') + ' ' + quote(endpoint));
+          example('Read status', 'curl --request GET' + authentication(platform, device) + ' --header ' + quote('X-Webhooks-Token: YOUR_STATE_API_TOKEN') + ' ' + quote(endpoint));
         }
       } catch (error) {status.textContent = error.message; status.hidden = false;}
       updateButtons();
       refreshHeight();
     }
     call.addEventListener('change', () => {chooseValue(); update();});
-    [host, method, fan, notify].forEach(input => input.addEventListener(input === host ? 'input' : 'change', update));
+    method.addEventListener('change', () => {
+      options = method.value === 'action' ? actionOptions : reportOptions;
+      call.replaceChildren(); options.forEach((field, index) => {const option = el('option', field.label); option.value = index; call.append(option);});
+      call.previousElementSibling.textContent = method.value === 'action' ? 'Action to run' : 'State or event to report';
+      fan.parentElement.hidden = family !== 'fanv2s' || method.value === 'action';
+      notify.parentElement.hidden = !jsonSupported || device.notification_policy !== 'allow_explicit' || method.value === 'action';
+      chooseValue(); renderTable(); update();
+    });
+    [host, fan, notify].forEach(input => input.addEventListener(input === host ? 'input' : 'change', update));
     const response = el('details', undefined, 'field-group'); response.append(el('summary', 'Responses and errors'), el('p', 'Successful updates return JSON with success: true. Legacy response fields vary by device and may contain previous values; they are not proof that hardware moved. JSON state updates return the applied snapshot, availability, and notification outcome. A notification outcome of sent means HomeKit publication was requested, not that a phone rendered it.'),
       el('p', 'Common HTTP errors: 400 invalid input; 401 missing or incorrect authentication; 404 accessory or route not found; 405 wrong method; 408 request timeout; 413 body too large; 415 JSON content type required; 503 state storage or publication failed. Legacy devices can also report errors inside a 200 JSON response. Check the response body.'));
     response.addEventListener('toggle', refreshHeight); container.append(response);
     chooseValue(); update();
   }
-  const api = {fields, build, origin, defaultHost, render};
+  const api = {fields, build, buildAction, origin, defaultHost, render};
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.WebhooksApi = api;
 }(typeof window === 'object' ? window : globalThis));

@@ -62,7 +62,7 @@ with cards, teal accents, grouped fields, and Homebridge light/dark themes.
 - **API calls:** beside each device, open a reference with supported fields,
   value meanings, and copyable URLs and curl examples. Change the hostname and
   example values without changing settings. The address defaults to this
-  Homebridge instance's IP. **Send state report** (or **Send event**) sends the
+  Homebridge instance's IP. **Send state report** (or **Send event**) and **Run action** send the
   displayed request and shows its HTTP status and response below; requests only
   run when clicked. Tests use saved credentials and this instance's saved
   listener, including local self-signed HTTPS. Save and restart before testing
@@ -121,7 +121,7 @@ With `notification_policy: "allow_explicit"`, append `&force_notify=true` to
 request another event even if the values have not changed. To report a lock,
 use `lockcurrentstate` and `locktargetstate`. For garage obstruction, use
 `obstructiondetected=true` or `false`; zero and false are valid updates.
-Current and target can differ. Reports never invoke the outgoing command URLs.
+Current and target can differ. State reports never invoke the outgoing command URLs. External commands require `action=on` and explicit per-device enablement (see below).
 
 ### Optional JSON state API
 
@@ -707,3 +707,88 @@ feedback deadline expires, and HAP reads return an unavailable error. Home may
 continue displaying its cached value until it refreshes. Reopening Home can
 reveal No Response, and returning to the fresh state may also take time. This
 is distinct from the physical position and from network/startup failures.
+
+### External actions
+
+Enable **Allow external actions** on a controllable device, save settings and
+restart its bridge. With this option enabled, add `action=on` to an incoming
+webhook to execute the same configured HTTP command as a HomeKit tile change.
+`action=off`, or no action parameter, only reports state. “Off” here disables
+execution; it does not turn the device off.
+
+```text
+/?accessoryId=example-light&state=true&action=on
+/?accessoryId=example-light&state=false&action=on
+/?accessoryId=example-light&state=true
+```
+
+The first two commands run the configured on/off URLs respectively; the third
+only reports that the tile is on. GET works with UniFi Protect. POST accepts the
+same query parameters and ignores its body (for alarm metadata) after enforcing
+request size/deadline limits. Body fields cannot override the query command.
+Existing listener Basic authentication or the optional global Bearer token applies; the garage/lock JSON State API
+and its token are unchanged. Do not expose command URLs publicly.
+
+Each command contains exactly one control field, besides `accessoryId` and
+`action`. Current-state feedback, extra fields and multiple controls are rejected
+before any action or state mutation. The API calls page builds the proper URL,
+shows accepted values, and runs a request only on an explicit click.
+
+| Devices | Command field | Accepted command values |
+| --- | --- | --- |
+| Switches, outlets, lights, fans, valves | `state` | `true` / `false` |
+| Lights | `value` | HomeKit brightness 0–100, integer; outgoing brightness_factor applies |
+| Push buttons | `state` | `true`, executes push_url and automatically releases |
+| Garage doors | `targetdoorstate` | 0 open, 1 close |
+| Locks | `locktargetstate` | 0 unlock, 1 lock |
+| Window coverings | `targetposition` | 0–100, integer, existing position-to-command mapping |
+| Thermostats | `targettemperature` | Configured temperature range and step, °C |
+| Thermostats | `targetstate` | 0 off, 1 heat, 2 cool, 3 auto |
+| Security systems | `targetstate` | 0 stay, 1 away, 2 night, 3 disarm |
+| Fans | `speed` | 0–100, integer; outgoing speed_factor applies |
+| Fans | `rotationDirection` | 0 clockwise, 1 counterclockwise |
+| Fans, if configured | `swingMode`, `targetState`, or `lockstate` | 0 / 1, one field per command |
+
+Sensors, CO₂ sensors, doorbells and stateless switches have no outgoing action
+handlers. Continue reporting their readings/events and use Home automations.
+There is no toggle command: repeated requests explicitly request the same target,
+which avoids reversing a device when an alarm is repeated.
+
+Window coverings retain the legacy HomeKit handler mapping: target 0 selects
+open_url, 1–25 open_20_url, 26–45 open_40_url, 46–65 open_60_url,
+66–94 open_80_url and 95–100 close_url. This mapping differs from the usual
+HomeKit position naming; existing configurations are not remapped.
+
+Commands require a configured outgoing URL. They preserve existing HomeKit
+state behavior, including external feedback versus optimistic garage/lock modes.
+HTTP 200 with `commandCompleted: true` means the configured HTTP request
+completed successfully, not that physical movement finished. Outgoing errors
+return 502 with a sanitized error. Other errors include 400 invalid/ambiguous
+command, 403 external actions disabled, and 409 missing outgoing URL.
+A timeout or interrupted response can leave the command outcome unknown.
+Neither the listener nor the reference page automatically retries a command.
+
+### Incoming Bearer authentication
+
+Set **Webhook Bearer token** in Webhook settings → Authentication and HTTPS to
+require authentication on incoming reports and actions for every accessory.
+Use a random 32–256 character token containing letters, numbers, underscores
+or hyphens. For example, generate one with `openssl rand -hex 32`.
+Choose Bearer or Basic authentication; clear the Basic user/password when
+switching to Bearer. Omit or clear the token to retain existing authentication.
+
+In UniFi Protect, choose **Bearer** and enter the token alone. Alternatively,
+choose **None** and add a custom header named `Authorization` with the value
+`Bearer YOUR_TOKEN`. Do not put the token in the URL. With HTTPS the token is
+encrypted in transit; a token grants access to all devices protected by it.
+
+To exempt an accessory, enable **Disable Bearer authentication for this device**
+in its Incoming authentication settings. Only that saved accessory is exempt;
+query/body fields cannot disable authentication. External action enablement is
+still required separately. The garage/lock JSON State API continues requiring
+its own `X-Webhooks-Token`, even on a Bearer-exempt accessory.
+
+The API calls page shows placeholder credentials in copied examples. Its
+in-page runner loads the saved token on the server, follows per-device opt-outs,
+and redacts the token from returned output. Authentication failures return 401
+before any reports or actions run.
