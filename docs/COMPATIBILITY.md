@@ -87,6 +87,20 @@ TLS certificate verification is enabled by default. The existing
 
 ### Configuration and state validation
 
+Version 0.5.1 fixes unused device lists being saved as default-only accessory
+rows. Empty lists stay empty until you use Add. Device settings now use the
+schema-generated form, with global settings first and a collapsible list for
+each device family. All accessory fields remain available; the legacy
+`external_state` alias remains a JSON option instead of a second state-mode control.
+
+Existing rows containing only form defaults and no ID are ignored at startup
+with a warning identifying the array and zero-based row index. You can remove
+these unused rows in the configuration editor. Startup does not rewrite the
+configuration. A row with a name, command URL, custom setting or another
+non-default value still requires a valid ID and is never silently discarded.
+The optional `state_api_token` may remain configured when there are no garage
+doors, locks, or other accessories; this does not prevent startup.
+
 Incomplete Basic authentication credentials and TLS certificate/key pairs are
 rejected at startup. Invalid command settings and out-of-range limits are also
 reported as configuration errors. Supply both members of a pair or neither.

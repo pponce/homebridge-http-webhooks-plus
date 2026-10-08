@@ -74,7 +74,7 @@ test('all original registration aliases remain attached to the new package', () 
 
 test('package is independently publishable with only required runtime dependencies', () => {
   assert.equal(pkg.name, 'homebridge-http-webhooks-plus');
-  assert.equal(pkg.version, '0.5.0');
+  assert.equal(pkg.version, '0.5.1');
   assert.equal(pkg.license, 'GPL-3.0');
   assert.equal(pkg.author, 'benzman81');
   assert.deepEqual(pkg.dependencies, {'node-persist':baseline.dependencies['node-persist'], selfsigned:baseline.dependencies.selfsigned});

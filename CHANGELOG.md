@@ -1,4 +1,12 @@
-## Unreleased
+## 0.5.1
+
+- Stop the settings form from creating default-only accessories in unused device
+  lists. Use schema-generated Add templates, allow zero devices in every family,
+  and require an ID for devices deliberately added in the form.
+- Ignore previously saved default-only rows during startup, with a warning that
+  identifies their configuration location. Preserve all configured devices and
+  reject incomplete devices with meaningful settings instead of discarding them.
+- Keep the state API token independent of the configured accessory lists.
 
 - Rewrite the README, upgrade guide, state API reference, and settings help around installation, configuration, and upgrading from the original HTTP Webhooks plugin.
 - Clarify cache backups, optional state settings, and current HTTP redirect and request-limit behavior.

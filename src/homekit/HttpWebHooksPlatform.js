@@ -1,5 +1,6 @@
 const Constants = require('../Constants');
 const Server = require('../Server');
+const {accessoryRows} = require('../AccessoryConfig');
 
 var HttpWebHookSensorAccessory = require('./accessories/HttpWebHookSensorAccessory');
 var HttpWebHookSwitchAccessory = require('./accessories/HttpWebHookSwitchAccessory');
@@ -33,21 +34,21 @@ function HttpWebHooksPlatform(log, config, homebridge) {
     dir : this.cacheDirectory
   });
 
-  this.sensors = config["sensors"] || [];
-  this.switches = config["switches"] || [];
-  this.pushButtons = config["pushbuttons"] || [];
-  this.doorbells = config["doorbells"] || [];
-  this.lights = config["lights"] || [];
-  this.thermostats = config["thermostats"] || [];
-  this.outlets = config["outlets"] || [];
-  this.security = config["security"] || [];
-  this.garageDoorOpeners = config["garagedooropeners"] || [];
-  this.statelessSwitches = config["statelessswitches"] || [];
-  this.windowCoverings = config["windowcoverings"] || [];
-  this.lockMechanisms = config["lockmechanisms"] || [];
-  this.fanv2s = config["fanv2s"] || [];
-  this.co2sensors = config["co2sensors"] || [];
-  this.valves = config["valves"] || [];
+  this.sensors = accessoryRows(config, 'sensors', this.log);
+  this.switches = accessoryRows(config, 'switches', this.log);
+  this.pushButtons = accessoryRows(config, 'pushbuttons', this.log);
+  this.doorbells = accessoryRows(config, 'doorbells', this.log);
+  this.lights = accessoryRows(config, 'lights', this.log);
+  this.thermostats = accessoryRows(config, 'thermostats', this.log);
+  this.outlets = accessoryRows(config, 'outlets', this.log);
+  this.security = accessoryRows(config, 'security', this.log);
+  this.garageDoorOpeners = accessoryRows(config, 'garagedooropeners', this.log);
+  this.statelessSwitches = accessoryRows(config, 'statelessswitches', this.log);
+  this.windowCoverings = accessoryRows(config, 'windowcoverings', this.log);
+  this.lockMechanisms = accessoryRows(config, 'lockmechanisms', this.log);
+  this.fanv2s = accessoryRows(config, 'fanv2s', this.log);
+  this.co2sensors = accessoryRows(config, 'co2sensors', this.log);
+  this.valves = accessoryRows(config, 'valves', this.log);
 
   this.server = new Server(Service, Characteristic, this, config);
   if (typeof homebridge.on === 'function') homebridge.on('shutdown', () => this.server.close());

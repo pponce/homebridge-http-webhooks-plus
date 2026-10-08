@@ -78,7 +78,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "sensor1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -127,6 +129,14 @@
               "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "switches": {
@@ -141,7 +151,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "Switch1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -251,6 +263,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "pushbuttons": {
@@ -265,7 +285,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "pushbutton1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -346,6 +368,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "doorbells": {
@@ -360,7 +390,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "doorbell1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -392,6 +424,14 @@
               "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "lights": {
@@ -406,7 +446,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "light1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -556,6 +598,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "co2sensors": {
@@ -570,7 +620,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "co2sensor1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -597,6 +649,14 @@
               "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "thermostats": {
@@ -611,7 +671,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "thermostat1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -739,6 +801,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "outlets": {
@@ -753,7 +823,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "outlet1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -863,6 +935,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "security": {
@@ -877,7 +957,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "security1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -958,6 +1040,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "garagedooropeners": {
@@ -972,7 +1062,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "garagedooropeners1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -1147,7 +1239,41 @@
               "title": "Close Form",
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
-          }
+          },
+          "ui:order": [
+            "id",
+            "name",
+            "rejectUnauthorized",
+            "open_url",
+            "open_method",
+            "open_body",
+            "open_headers",
+            "close_url",
+            "close_method",
+            "close_body",
+            "close_headers",
+            "state_mode",
+            "startup_state_policy",
+            "notification_policy",
+            "notification_min_interval_ms",
+            "request_timeout_ms",
+            "response_max_bytes",
+            "feedback_timeout_seconds",
+            "obstruction_monitoring",
+            "obstruction_timeout_seconds",
+            "log_level",
+            "max_redirects",
+            "open_form",
+            "close_form"
+          ]
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "statelessswitches": {
@@ -1162,7 +1288,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "statelessswitches1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -1194,6 +1322,12 @@
                     "required": false
                   }
                 }
+              },
+              "minItems": 0,
+              "default": [],
+              "ui:widget": {
+                "listItems": 0,
+                "orderable": false
               }
             },
             "log_level": {
@@ -1210,6 +1344,14 @@
               "description": "Inherit uses the platform choice and Homebridge logging. Debug always respects Homebridge/child-bridge debug enablement. No request or response payloads are logged."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "windowcoverings": {
@@ -1224,7 +1366,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "windowcovering1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -1456,6 +1600,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "lockmechanisms": {
@@ -1470,7 +1622,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "lockmechanisms1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -1627,6 +1781,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "fanv2s": {
@@ -1641,7 +1803,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "fanv2-1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -1951,6 +2115,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "valves": {
@@ -1965,7 +2137,9 @@
               "title": "ID",
               "type": "string",
               "placeholder": "valve1",
-              "required": false
+              "required": true,
+              "minLength": 1,
+              "maxLength": 128
             },
             "name": {
               "title": "Name",
@@ -2085,6 +2259,14 @@
               "description": "Optional JSON object of string, number or boolean form values. Leave raw body empty when using a form."
             }
           }
+        },
+        "minItems": 0,
+        "default": [],
+        "ui:widget": {
+          "listItems": 0,
+          "orderable": false,
+          "expandable": true,
+          "expanded": false
         }
       },
       "state_api_token": {
@@ -2127,7 +2309,10 @@
           "type": "string",
           "pattern": "^[a-zA-Z0-9_-]{1,64}$"
         },
-        "description": "Optional custom secret field names. Mandatory credential redaction cannot be disabled."
+        "description": "Optional custom secret field names. Mandatory credential redaction cannot be disabled.",
+        "ui:widget": {
+          "listItems": 0
+        }
       },
       "webhook_timeout_ms": {
         "type": "integer",
@@ -2150,836 +2335,42 @@
         "minimum": 1024,
         "maximum": 65536
       }
-    }
+    },
+    "ui:order": [
+      "webhook_port",
+      "webhook_listen_host",
+      "webhook_enable_cors",
+      "cache_directory",
+      "http_auth_user",
+      "http_auth_pass",
+      "https",
+      "https_keyfile",
+      "https_certfile",
+      "state_api_token",
+      "webhook_response_mode",
+      "log_level",
+      "extra_redaction_keys",
+      "webhook_timeout_ms",
+      "webhook_body_max_bytes",
+      "state_api_body_max_bytes",
+      "sensors",
+      "switches",
+      "pushbuttons",
+      "doorbells",
+      "lights",
+      "co2sensors",
+      "thermostats",
+      "outlets",
+      "security",
+      "garagedooropeners",
+      "statelessswitches",
+      "windowcoverings",
+      "lockmechanisms",
+      "fanv2s",
+      "valves"
+    ]
   },
   "layout": [
-    {
-      "type": "fieldset",
-      "title": "Webhook Settings",
-      "expandable": true,
-      "expanded": false,
-      "items": [
-        "webhook_port",
-        "webhook_listen_host",
-        "cache_directory",
-        "http_auth_user",
-        "http_auth_pass",
-        "https",
-        "https_keyfile",
-        "https_certfile",
-        {
-          "type": "section",
-          "title": "Incoming state API",
-          "expandable": true,
-          "expanded": true,
-          "items": [
-            "state_api_token"
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Compatibility",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            "webhook_response_mode"
-          ]
-        },
-        "log_level",
-        "extra_redaction_keys",
-        "webhook_timeout_ms",
-        "webhook_body_max_bytes",
-        "state_api_body_max_bytes"
-      ]
-    },
-    {
-      "type": "fieldset",
-      "title": "Webhook Devices",
-      "expandable": true,
-      "expanded": false,
-      "items": [
-        {
-          "type": "section",
-          "title": "Sensors",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Sensors",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "sensors[]",
-                  "items": [
-                    "sensors[].id",
-                    "sensors[].name",
-                    "sensors[].type",
-                    "sensors[].autoRelease",
-                    "sensors[].autoReleaseTime",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "sensors[].log_level"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "sensors"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Switches",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Switches",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "switches[]",
-                  "items": [
-                    "switches[].id",
-                    "switches[].name",
-                    "switches[].rejectUnauthorized",
-                    "switches[].on_url",
-                    "switches[].on_method",
-                    "switches[].on_body",
-                    "switches[].on_headers",
-                    "switches[].off_url",
-                    "switches[].off_method",
-                    "switches[].off_body",
-                    "switches[].off_headers",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "switches[].log_level",
-                        "switches[].request_timeout_ms",
-                        "switches[].response_max_bytes",
-                        "switches[].max_redirects",
-                        "switches[].on_form",
-                        "switches[].off_form"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "switches"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Push Buttons",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Push Button",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "pushbuttons[]",
-                  "items": [
-                    "pushbuttons[].id",
-                    "pushbuttons[].name",
-                    "pushbuttons[].rejectUnauthorized",
-                    "pushbuttons[].push_url",
-                    "pushbuttons[].push_method",
-                    "pushbuttons[].push_body",
-                    "pushbuttons[].push_headers",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "pushbuttons[].log_level",
-                        "pushbuttons[].request_timeout_ms",
-                        "pushbuttons[].response_max_bytes",
-                        "pushbuttons[].max_redirects",
-                        "pushbuttons[].push_form"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "pushbuttons"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Doorbells",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Doorbell",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "doorbells[]",
-                  "items": [
-                    "doorbells[].id",
-                    "doorbells[].name",
-                    "doorbells[].double_press",
-                    "doorbells[].long_press",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "doorbells[].log_level"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "doorbells"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Lights",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Lights",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "lights[]",
-                  "items": [
-                    "lights[].id",
-                    "lights[].name",
-                    "lights[].rejectUnauthorized",
-                    "lights[].on_url",
-                    "lights[].on_method",
-                    "lights[].on_body",
-                    "lights[].on_headers",
-                    "lights[].off_url",
-                    "lights[].off_method",
-                    "lights[].off_body",
-                    "lights[].off_headers",
-                    "lights[].brightness_url",
-                    "lights[].brightness_method",
-                    "lights[].brightness_body",
-                    "lights[].brightness_headers",
-                    "lights[].brightness_factor",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "lights[].log_level",
-                        "lights[].request_timeout_ms",
-                        "lights[].response_max_bytes",
-                        "lights[].max_redirects",
-                        "lights[].on_form",
-                        "lights[].off_form",
-                        "lights[].brightness_form"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "lights"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "CO2 Sensors",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "CO2 Sensor",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "co2sensors[]",
-                  "items": [
-                    "co2sensors[].id",
-                    "co2sensors[].name",
-                    "co2sensors[].co2_peak_level",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "co2sensors[].log_level"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "co2sensors"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Thermostats",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Thermostats",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "thermostats[]",
-                  "items": [
-                    "thermostats[].id",
-                    "thermostats[].name",
-                    "thermostats[].rejectUnauthorized",
-                    "thermostats[].set_target_temperature_url",
-                    "thermostats[].set_target_temperature_method",
-                    "thermostats[].set_target_temperature_body",
-                    "thermostats[].set_target_temperature_headers",
-                    "thermostats[].set_target_heating_cooling_state_url",
-                    "thermostats[].set_target_heating_cooling_state_method",
-                    "thermostats[].set_target_heating_cooling_state_body",
-                    "thermostats[].set_target_heating_cooling_state_headers",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "thermostats[].log_level",
-                        "thermostats[].request_timeout_ms",
-                        "thermostats[].response_max_bytes",
-                        "thermostats[].max_redirects",
-                        "thermostats[].set_target_temperature_form",
-                        "thermostats[].set_target_heating_cooling_state_form"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "thermostats"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Outlets",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Outlets",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "outlets[]",
-                  "items": [
-                    "outlets[].id",
-                    "outlets[].name",
-                    "outlets[].rejectUnauthorized",
-                    "outlets[].on_url",
-                    "outlets[].on_method",
-                    "outlets[].on_body",
-                    "outlets[].on_headers",
-                    "outlets[].off_url",
-                    "outlets[].off_method",
-                    "outlets[].off_body",
-                    "outlets[].off_headers",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "outlets[].log_level",
-                        "outlets[].request_timeout_ms",
-                        "outlets[].response_max_bytes",
-                        "outlets[].max_redirects",
-                        "outlets[].on_form",
-                        "outlets[].off_form"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "outlets"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Security Systems",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Security",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "security[]",
-                  "items": [
-                    "security[].id",
-                    "security[].name",
-                    "security[].rejectUnauthorized",
-                    "security[].set_state_url",
-                    "security[].set_state_method",
-                    "security[].set_state_body",
-                    "security[].set_state_headers",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "security[].log_level",
-                        "security[].request_timeout_ms",
-                        "security[].response_max_bytes",
-                        "security[].max_redirects",
-                        "security[].set_state_form"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "security"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Garage Door Openers",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Garage Door Openers",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "garagedooropeners[]",
-                  "title": "Garage Door Opener",
-                  "items": [
-                    "garagedooropeners[].id",
-                    "garagedooropeners[].name",
-                    {
-                      "type": "section",
-                      "title": "State and feedback",
-                      "expandable": true,
-                      "expanded": true,
-                      "items": [
-                        "garagedooropeners[].state_mode",
-                        "garagedooropeners[].startup_state_policy",
-                        "garagedooropeners[].feedback_timeout_seconds"
-                      ]
-                    },
-                    {
-                      "type": "section",
-                      "title": "Notifications",
-                      "expandable": true,
-                      "expanded": true,
-                      "items": [
-                        "garagedooropeners[].notification_policy",
-                        "garagedooropeners[].notification_min_interval_ms"
-                      ]
-                    },
-                    {
-                      "type": "section",
-                      "title": "Obstruction feedback",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "garagedooropeners[].obstruction_monitoring",
-                        "garagedooropeners[].obstruction_timeout_seconds"
-                      ]
-                    },
-                    {
-                      "type": "section",
-                      "title": "Advanced HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "garagedooropeners[].request_timeout_ms",
-                        "garagedooropeners[].response_max_bytes",
-                        "garagedooropeners[].log_level",
-                        "garagedooropeners[].max_redirects",
-                        "garagedooropeners[].open_form",
-                        "garagedooropeners[].close_form"
-                      ]
-                    },
-                    "garagedooropeners[].rejectUnauthorized",
-                    "garagedooropeners[].open_url",
-                    "garagedooropeners[].open_method",
-                    "garagedooropeners[].open_body",
-                    "garagedooropeners[].open_headers",
-                    "garagedooropeners[].close_url",
-                    "garagedooropeners[].close_method",
-                    "garagedooropeners[].close_body",
-                    "garagedooropeners[].close_headers"
-                  ]
-                }
-              ],
-              "key": "garagedooropeners"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Stateless Switches",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Stateless Switches",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "title": "Stateless Switches",
-                  "expandable": true,
-                  "expanded": true,
-                  "items": [
-                    "statelessswitches[].id",
-                    "statelessswitches[].name",
-                    {
-                      "type": "section",
-                      "title": "Buttons",
-                      "expandable": true,
-                      "expanded": true,
-                      "items": [
-                        {
-                          "title": "Buttons",
-                          "type": "array",
-                          "orderable": false,
-                          "items": [
-                            "statelessswitches[].buttons[].name",
-                            "statelessswitches[].buttons[].double_press",
-                            "statelessswitches[].buttons[].long_press"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "statelessswitches[].log_level"
-                      ]
-                    }
-                  ],
-                  "key": "statelessswitches[]"
-                }
-              ],
-              "key": "statelessswitches"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Window Coverings",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Window Coverings",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "windowcoverings[]",
-                  "items": [
-                    "windowcoverings[].id",
-                    "windowcoverings[].name",
-                    "windowcoverings[].rejectUnauthorized",
-                    "windowcoverings[].open_url",
-                    "windowcoverings[].open_method",
-                    "windowcoverings[].open_body",
-                    "windowcoverings[].open_headers",
-                    "windowcoverings[].open_80_url",
-                    "windowcoverings[].open_80_method",
-                    "windowcoverings[].open_80_body",
-                    "windowcoverings[].open_80_headers",
-                    "windowcoverings[].open_60_url",
-                    "windowcoverings[].open_60_method",
-                    "windowcoverings[].open_60_body",
-                    "windowcoverings[].open_60_headers",
-                    "windowcoverings[].open_40_url",
-                    "windowcoverings[].open_40_method",
-                    "windowcoverings[].open_40_body",
-                    "windowcoverings[].open_40_headers",
-                    "windowcoverings[].open_20_url",
-                    "windowcoverings[].open_20_method",
-                    "windowcoverings[].open_20_body",
-                    "windowcoverings[].open_20_headers",
-                    "windowcoverings[].close_url",
-                    "windowcoverings[].close_method",
-                    "windowcoverings[].close_body",
-                    "windowcoverings[].close_headers",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "windowcoverings[].log_level",
-                        "windowcoverings[].request_timeout_ms",
-                        "windowcoverings[].response_max_bytes",
-                        "windowcoverings[].max_redirects",
-                        "windowcoverings[].open_form",
-                        "windowcoverings[].open_80_form",
-                        "windowcoverings[].open_60_form",
-                        "windowcoverings[].open_40_form",
-                        "windowcoverings[].open_20_form",
-                        "windowcoverings[].close_form"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "windowcoverings"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Lock Mechanisms",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Lock Mechanisms",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "lockmechanisms[]",
-                  "title": "Lock Mechanism",
-                  "items": [
-                    "lockmechanisms[].id",
-                    "lockmechanisms[].name",
-                    {
-                      "type": "section",
-                      "title": "State and feedback",
-                      "expandable": true,
-                      "expanded": true,
-                      "items": [
-                        "lockmechanisms[].state_mode",
-                        "lockmechanisms[].startup_state_policy",
-                        "lockmechanisms[].feedback_timeout_seconds"
-                      ]
-                    },
-                    {
-                      "type": "section",
-                      "title": "Notifications",
-                      "expandable": true,
-                      "expanded": true,
-                      "items": [
-                        "lockmechanisms[].notification_policy",
-                        "lockmechanisms[].notification_min_interval_ms"
-                      ]
-                    },
-                    {
-                      "type": "section",
-                      "title": "Advanced HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "lockmechanisms[].request_timeout_ms",
-                        "lockmechanisms[].response_max_bytes",
-                        "lockmechanisms[].log_level",
-                        "lockmechanisms[].max_redirects",
-                        "lockmechanisms[].open_form",
-                        "lockmechanisms[].close_form"
-                      ]
-                    },
-                    "lockmechanisms[].rejectUnauthorized",
-                    "lockmechanisms[].open_url",
-                    "lockmechanisms[].open_method",
-                    "lockmechanisms[].open_body",
-                    "lockmechanisms[].open_headers",
-                    "lockmechanisms[].close_url",
-                    "lockmechanisms[].close_method",
-                    "lockmechanisms[].close_body",
-                    "lockmechanisms[].close_headers"
-                  ]
-                }
-              ],
-              "key": "lockmechanisms"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Fanv2",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Fanv2",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "fanv2s[]",
-                  "items": [
-                    "fanv2s[].id",
-                    "fanv2s[].name",
-                    "fanv2s[].rejectUnauthorized",
-                    "fanv2s[].on_url",
-                    "fanv2s[].on_method",
-                    "fanv2s[].on_body",
-                    "fanv2s[].on_headers",
-                    "fanv2s[].off_url",
-                    "fanv2s[].off_method",
-                    "fanv2s[].off_body",
-                    "fanv2s[].off_headers",
-                    "fanv2s[].speed_url",
-                    "fanv2s[].speed_method",
-                    "fanv2s[].speed_body",
-                    "fanv2s[].speed_headers",
-                    "fanv2s[].speed_factor",
-                    "fanv2s[].enableLockPhysicalControls",
-                    "fanv2s[].lock_url",
-                    "fanv2s[].lock_method",
-                    "fanv2s[].lock_body",
-                    "fanv2s[].lock_headers",
-                    "fanv2s[].unlock_url",
-                    "fanv2s[].unlock_method",
-                    "fanv2s[].unlock_body",
-                    "fanv2s[].unlock_headers",
-                    "fanv2s[].enableTargetStateControls",
-                    "fanv2s[].target_state_url",
-                    "fanv2s[].target_state_method",
-                    "fanv2s[].target_state_body",
-                    "fanv2s[].target_state_headers",
-                    "fanv2s[].enableSwingModeControls",
-                    "fanv2s[].swing_mode_url",
-                    "fanv2s[].swing_mode_method",
-                    "fanv2s[].swing_mode_body",
-                    "fanv2s[].swing_mode_headers",
-                    "fanv2s[].rotation_direction_url",
-                    "fanv2s[].rotation_direction_method",
-                    "fanv2s[].rotation_direction_body",
-                    "fanv2s[].rotation_direction_headers",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "fanv2s[].log_level",
-                        "fanv2s[].request_timeout_ms",
-                        "fanv2s[].response_max_bytes",
-                        "fanv2s[].max_redirects",
-                        "fanv2s[].on_form",
-                        "fanv2s[].off_form",
-                        "fanv2s[].speed_form",
-                        "fanv2s[].lock_form",
-                        "fanv2s[].unlock_form",
-                        "fanv2s[].target_state_form",
-                        "fanv2s[].swing_mode_form",
-                        "fanv2s[].rotation_direction_form"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "fanv2s"
-            }
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Valves",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "title": "Valves",
-              "type": "array",
-              "orderable": false,
-              "items": [
-                {
-                  "type": "section",
-                  "key": "valves[]",
-                  "items": [
-                    "valves[].id",
-                    "valves[].name",
-                    "valves[].type",
-                    "valves[].rejectUnauthorized",
-                    "valves[].on_url",
-                    "valves[].on_method",
-                    "valves[].on_body",
-                    "valves[].on_headers",
-                    "valves[].off_url",
-                    "valves[].off_method",
-                    "valves[].off_body",
-                    "valves[].off_headers",
-                    {
-                      "type": "section",
-                      "title": "Logging and HTTP settings",
-                      "expandable": true,
-                      "expanded": false,
-                      "items": [
-                        "valves[].log_level",
-                        "valves[].request_timeout_ms",
-                        "valves[].response_max_bytes",
-                        "valves[].max_redirects",
-                        "valves[].on_form",
-                        "valves[].off_form"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "key": "valves"
-            }
-          ]
-        }
-      ]
-    }
+    "*"
   ]
 }

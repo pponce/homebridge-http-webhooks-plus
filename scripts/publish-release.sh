@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Publish the checked-out, tested package. Never changes a Homebridge installation.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+task_registry='https://registry.npmjs.org/'
+task_expected_commit="${1:?Usage: bash scripts/publish-release.sh EXPECTED_COMMIT}"
+[[ "$(git rev-parse HEAD)" = "$task_expected_commit" ]] || { echo 'Unexpected source commit; stopped.'; exit 1; }
+[[ -z "$(git status --porcelain)" ]] || { echo 'Source checkout has local changes; stopped.'; exit 1; }
+task_version=$(node -p 'require("./package.json").version')
+task_name=$(node -p 'require("./package.json").name')
+task_tmp=$(mktemp -d)
+trap 'rm -rf -- "$task_tmp"' EXIT
+
+npm install --include=dev --ignore-scripts --no-package-lock --no-audit --no-fund
+npm test
+npm run test:hap
+node -e 'if (typeof require("./index.js") !== "function") process.exit(1)'
+[[ -z "$(git status --porcelain)" ]] || { echo 'Checks changed source files; stopped.'; exit 1; }
+npm pack --json --pack-destination "$task_tmp" > "$task_tmp/pack.json"
+task_tarball="$task_tmp/$(node -p 'require(process.argv[1])[0].filename' "$task_tmp/pack.json")"
+task_integrity=$(node -p 'require(process.argv[1])[0].integrity' "$task_tmp/pack.json")
+echo "Prepared $task_name@$task_version from $task_expected_commit"
+echo "Package integrity: $task_integrity"
+
+# A lookup/authentication error must not be mistaken for an unpublished version.
+if npm view "$task_name@$task_version" dist.integrity --json --prefer-online --registry="$task_registry" > "$task_tmp/registry.json" 2> "$task_tmp/registry-error.txt"; then
+  task_existing=$(node -p 'require(process.argv[1])' "$task_tmp/registry.json")
+  [[ "$task_existing" = "$task_integrity" ]] || { echo 'This version already exists with different contents; stopped.'; exit 1; }
+  echo 'The exact package is already published and verified.'
+  exit 0
+fi
+node -e 'const fs=require("fs");let r;try{r=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));}catch{};if(r?.error?.code!=="E404")process.exit(1)' "$task_tmp/registry.json" || {
+  cat "$task_tmp/registry-error.txt"; echo 'Registry lookup failed; publication stopped.'; exit 1;
+}
+
+echo 'Complete any npm authentication link in your browser, leaving this terminal open.'
+npm whoami --registry="$task_registry" || npm login --browser=false --registry="$task_registry"
+npm publish "$task_tarball" --access public --browser=false --registry="$task_registry"
+for task_attempt in {1..12}; do
+  task_actual=$(npm view "$task_name@$task_version" dist.integrity --prefer-online --fetch-retries=0 --fetch-timeout=10000 --registry="$task_registry" 2>/dev/null) || task_actual=''
+  if [[ "$task_actual" = "$task_integrity" ]]; then
+    echo "Published and verified: $task_name@$task_version"
+    exit 0
+  fi
+  if [[ -n "$task_actual" ]]; then echo 'Registry artifact differs; stopped for review.'; exit 1; fi
+  [[ "$task_attempt" = 12 ]] || sleep 5
+done
+echo 'npm accepted publication, but registry verification is pending. Rerun this script to verify before installing.'
+exit 1
