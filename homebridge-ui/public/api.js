@@ -118,7 +118,7 @@
       if (field.values) field.values.forEach(([item, label]) => {const option = el('option', item + ' · ' + label); option.value = item; value.append(option);});
       else {value.type = 'number'; value.min = field.min; value.max = field.max; value.step = field.step; value.value = field.sample;}
       const label = el('label', 'Value'); label.htmlFor = value.id; valueWrapper.replaceChildren(label, value);
-      value.addEventListener('input', update); value.addEventListener('change', update);
+      value.addEventListener(field.values ? 'change' : 'input', update);
     }
     const fan = el('select'); fan.id = 'api-fan-power';
     for (const [item, label] of [['false', 'Off'], ['true', 'On']]) {const option = el('option', label); option.value = item; fan.append(option);}
@@ -159,7 +159,7 @@
       refreshHeight();
     }
     call.addEventListener('change', () => {chooseValue(); update();});
-    [host, method, fan, notify].forEach(input => {input.addEventListener('input', update); input.addEventListener('change', update);});
+    [host, method, fan, notify].forEach(input => input.addEventListener(input === host ? 'input' : 'change', update));
     const response = el('details', undefined, 'field-group'); response.append(el('summary', 'Responses and errors'), el('p', 'Successful updates return JSON with success: true. Legacy response fields vary by device and may contain previous values; they are not proof that hardware moved. JSON state updates return the applied snapshot, availability, and notification outcome. A notification outcome of sent means HomeKit publication was requested, not that a phone rendered it.'),
       el('p', 'Common HTTP errors: 400 invalid input; 401 missing or incorrect authentication; 404 accessory or route not found; 405 wrong method; 408 request timeout; 413 body too large; 415 JSON content type required; 503 state storage or publication failed. Legacy devices can also report errors inside a 200 JSON response. Check the response body.'));
     response.addEventListener('toggle', refreshHeight); container.append(response);
