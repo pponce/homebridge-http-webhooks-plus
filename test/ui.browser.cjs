@@ -43,13 +43,19 @@ async function pageFor(config = fixture, options = {}) {
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(({config, schema, options}) => {
     const copy = value => JSON.parse(JSON.stringify(value));
-    window.mock = {config: copy(config), saved: null, updates: 0, saves: 0, failSave: false, hostDisabled: false};
+    window.mock = {config: copy(config), saved: null, updates: 0, saves: 0, failSave: false, hostDisabled: false, requests:[]};
     const api = new EventTarget();
     Object.assign(api, {
       plugin: {installedVersion: '0.6.0'}, disableSaveButton() { mock.hostDisabled = true; },
       hideSchemaForm() {}, fixScrollHeight() {}, showSpinner() {}, hideSpinner() {},
       async getPluginConfig() { if (options.failLoad) throw Error('synthetic'); return copy(mock.config); },
       async getPluginConfigSchema() { return copy(schema); },
+      async request(path, payload) {
+        if(path === '/api/connection') return {defaultHost:'192.0.2.10',addresses:['192.0.2.10','127.0.0.1'],hostname:'bridge'};
+        mock.requests.push({path,payload:copy(payload)});
+        if (mock.requestError) throw Error('private-request-error');
+        return mock.response || {status:200,body:'{"success":true}'};
+      },
       async updatePluginConfig(value) { mock.updates++; mock.config = copy(value); return copy(value); },
       async savePluginConfig() { mock.saves++; if (mock.failSave) throw Error('synthetic secret must not be shown'); mock.saved = copy(mock.config); }
     });
@@ -235,6 +241,37 @@ test('API reference builds calls without configuration writes, requests, or cred
   assert.deepEqual(await page.evaluate(() => mock.config), initial);
   assert.equal(await page.locator('#save-settings').isDisabled(), true);
   assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('API reference detects the server address and sends only on click with response output', async () => {
+  const {page,context,errors} = await pageFor();
+  await page.getByRole('button',{name:'API calls for Garage door',exact:true}).click();
+  assert.equal(await page.locator('#api-host').inputValue(),'192.0.2.10');
+  assert.equal(await page.evaluate(()=>mock.requests.length),0);
+  await page.locator('#api-value').selectOption('0');
+  await page.locator('#api-execute').click();
+  await page.waitForFunction(()=>document.querySelector('#api-output').textContent.startsWith('HTTP 200'));
+  assert.deepEqual(await page.evaluate(()=>mock.requests[0]), {path:'/api/execute',payload:{family:'garagedooropeners',
+    id:'garage',port:'51928',https:false,host:'192.0.2.10',format:'webhook',field:'currentdoorstate',value:'0',fanPower:'false',notify:false}});
+  await page.locator('#api-format').selectOption('json');
+  await page.evaluate(()=>{mock.response={status:401,body:'{"success":false,"error":"authentication_required"}'};});
+  await page.locator('#api-execute').click();
+  await page.waitForFunction(()=>document.querySelector('#api-output').textContent.startsWith('HTTP 401'));
+  assert.match(await page.locator('#api-output').textContent(),/authentication_required/);
+  await page.evaluate(()=>{mock.response={status:200,body:'{"state":{"currentState":0}}'};});
+  await page.locator('#api-read-status').click();
+  await page.waitForFunction(()=>document.querySelector('#api-output').textContent.startsWith('HTTP 200'));
+  assert.equal(await page.evaluate(()=>mock.requests.at(-1).payload.format),'status');
+  await page.evaluate(()=>{mock.requestError=true;});
+  await page.locator('#api-execute').click();
+  await page.waitForFunction(()=>document.querySelector('#api-output').textContent.includes('Could not contact'));
+  assert.doesNotMatch(await page.locator('#api-output').textContent(),/private-request-error/);
+  await page.locator('#api-host').fill('external.example');
+  assert.equal(await page.locator('#api-execute').isDisabled(),true);
+  assert.equal(await page.evaluate(()=>mock.updates),0);
+  assert.equal(await page.evaluate(()=>mock.saves),0);
+  assert.deepEqual(errors,[]);
   await context.close();
 });
 

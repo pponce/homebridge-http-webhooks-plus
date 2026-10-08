@@ -3,7 +3,7 @@
   const M = window.WebhooksConfig;
   const $ = id => document.getElementById(id);
   let properties, blocks, baseline, activeIndex, editing, ready = false, saving = false;
-  let platformControls = [], deviceControls = [], apiTrigger;
+  let platformControls = [], deviceControls = [], apiTrigger, networkInfo, apiGeneration = 0;
   const config = () => blocks[activeIndex];
   const node = (tag, className, text) => {
     const element = document.createElement(tag);
@@ -290,15 +290,20 @@
     });
     window.homebridge.fixScrollHeight();
   }
-  function openApi(row, trigger) {
+  async function openApi(row, trigger) {
+    const generation = ++apiGeneration;
     apiTrigger = trigger;
     $('overview').hidden = true;
     $('api-reference').hidden = false;
     $('api-title').textContent = (row.data.name || M.labels[row.family]) + ' · API calls';
     $('api-type').textContent = M.labels[row.family] + ' · ID: ' + row.data.id;
-    window.WebhooksApi.render($('api-content'), row.family, row.data, config(), window.homebridge);
+    $('api-content').textContent = 'Detecting Homebridge address…';
     $('api-title').focus();
     window.homebridge.fixScrollHeight();
+    try {networkInfo ||= await window.homebridge.request('/api/connection');} catch (_) {}
+    if (generation !== apiGeneration) return;
+    window.WebhooksApi.render($('api-content'), row.family, row.data, config(), window.homebridge,
+      {network: networkInfo, canExecute: JSON.stringify(blocks) === baseline && !platformControls.some(record => record.parseError)});
   }
   function openEditor(family, index = null) {
     if (!validateControls(platformControls, config(), properties, true)) return;
@@ -414,6 +419,7 @@
     $('cancel-add').addEventListener('click', () => { $('type-picker').hidden = true; $('add-device').hidden = false; $('add-device').focus(); });
     $('back-devices').addEventListener('click', () => closeEditor());
     $('back-api').addEventListener('click', () => {
+      apiGeneration++;
       $('api-reference').hidden = true;
       $('overview').hidden = false;
       apiTrigger?.focus();

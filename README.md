@@ -61,7 +61,12 @@ with cards, teal accents, grouped fields, and Homebridge light/dark themes.
   opening or saving the page.
 - **API calls:** beside each device, open a reference with supported fields,
   value meanings, and copyable URLs and curl examples. Change the hostname and
-  example values without changing settings or sending requests. Garage and lock
+  example values without changing settings. The address defaults to this
+  Homebridge instance's IP. **Send state report** (or **Send event**) sends the
+  displayed request and shows its HTTP status and response below; requests only
+  run when clicked. Tests use saved credentials and this instance's saved
+  listener, including local self-signed HTTPS. Save and restart before testing
+  changed settings. Garage and lock
   pages also show JSON updates and status calls. Authentication credentials are
   placeholders; replace them in your external program. Examples reflect current
   configuration values, so save and restart before using changed settings.

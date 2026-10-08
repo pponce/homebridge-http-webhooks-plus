@@ -14,6 +14,7 @@ trap 'rm -rf -- "$task_tmp"' EXIT
 npm install --include=dev --ignore-scripts --no-package-lock --no-audit --no-fund
 npm test
 npm run test:hap
+npm run test:ui-server
 npx playwright install chromium
 npm run test:ui
 node -e 'if (typeof require("./index.js") !== "function") process.exit(1)'
@@ -28,6 +29,7 @@ const files = new Set(fs.readFileSync(process.argv[2], 'utf8').trim().split('\n'
 for (const file of ['index.js', 'package.json', 'config.schema.json', 'LICENSE',
   'homebridge-ui/public/index.html', 'homebridge-ui/public/index.js',
   'homebridge-ui/public/model.js', 'homebridge-ui/public/api.js',
+  'homebridge-ui/server.js', 'homebridge-ui/requests.js',
   'homebridge-ui/public/styles.css', 'docs/STATE_API.md']) {
   if (!files.has('package/' + file)) throw Error('Missing package file: ' + file);
 }

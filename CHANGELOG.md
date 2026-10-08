@@ -1,3 +1,13 @@
+## 0.6.3
+
+- Default API example addresses to the Homebridge instance's detected IP or
+  configured listener address instead of homebridge.local.
+- Add Send state report / Send event and Read status buttons with HTTP status
+  and response output below. Requests use the saved platform's credentials,
+  remain local to this instance, and are never sent automatically or retried.
+- Add the Homebridge plugin UI server helper dependency for authenticated
+  server-side testing without browser CORS or mixed-content restrictions.
+
 ## 0.6.2
 
 - Give the API reference Field column more room and keep field names on one

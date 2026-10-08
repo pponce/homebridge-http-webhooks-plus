@@ -87,7 +87,14 @@
     return {endpoint, body: bodyText, curl: 'curl --request ' + (json ? 'POST' : 'GET') + auth + token +
       (json ? ' --header ' + quote('Content-Type: application/json') + ' --data ' + quote(bodyText) : '') + ' ' + quote(endpoint)};
   }
-  function render(container, family, device, platform, homebridge) {
+  function defaultHost(platform, network = {}, browserHost = '') {
+    const bound = platform.webhook_listen_host;
+    let host = bound && !['::', '0.0.0.0'].includes(bound) ? bound :
+      network.addresses?.includes(browserHost.replace(/^\[|\]$/g, '')) ? browserHost : network.defaultHost || browserHost || 'homebridge.local';
+    if (host.includes(':') && !host.startsWith('[')) host = '[' + host + ']';
+    return host;
+  }
+  function render(container, family, device, platform, homebridge, settings = {}) {
     const el = (tag, text, className) => { const result = document.createElement(tag); if (text !== undefined) result.textContent = text; if (className) result.className = className; return result; };
     const refreshHeight = () => homebridge.fixScrollHeight();
     const options = fields(family, device).filter(field => !field.values || field.values.length);
@@ -96,9 +103,9 @@
     container.append(el('p', 'Examples use the current settings shown in this configuration. Save changes and restart the child bridge before using changed IDs or connection settings.', 'field-help'));
     const grid = el('div', undefined, 'field-grid api-controls');
     function control(labelText, input) { const wrapper = el('div', undefined, 'field'); const label = el('label', labelText); label.htmlFor = input.id; wrapper.append(label, input); grid.append(wrapper); return input; }
-    const host = el('input'); host.id = 'api-host'; host.type = 'text'; host.value = 'homebridge.local'; host.autocomplete = 'off';
+    const host = el('input'); host.id = 'api-host'; host.type = 'text'; host.value = defaultHost(platform, settings.network, window.location.hostname); host.autocomplete = 'off';
     control('Homebridge hostname or IP', host);
-    container.append(grid, el('p', 'Use an address reachable from your external program. The webhook port and HTTP/HTTPS scheme come from Webhook settings; this address is only used to build examples.', 'field-help'));
+    container.append(grid, el('p', 'The address defaults to this Homebridge instance. Use an address reachable from your external program. The webhook port and HTTP/HTTPS scheme come from Webhook settings.', 'field-help'));
     const listenHost = platform.webhook_listen_host;
     if (listenHost === '127.0.0.1' || listenHost === '::1' || listenHost === 'localhost') container.append(el('p', 'The listener is bound to loopback. Calls must originate on the Homebridge machine unless you configure a reachable listener or proxy.', 'notice'));
     const jsonSupported = ['garagedooropeners', 'lockmechanisms'].includes(family);
@@ -133,6 +140,40 @@
       el('td', field.label + ': ' + (field.values ? field.values.map(([item, label]) => item + ' = ' + label).join('; ') : field.min + '–' + field.max + (field.step === 1 ? ' (integer)' : ' (number)')) + (field.note ? '. ' + field.note : ''))); tbody.append(row);} table.append(tbody); tableWrap.append(table); container.append(tableWrap);
     const status = el('p', undefined, 'notice'); status.setAttribute('role', 'status'); status.hidden = true; container.append(status);
     const examples = el('div', undefined, 'api-examples'); container.append(examples);
+    const runner = el('section', undefined, 'api-runner');
+    const send = el('button', 'Send state report', 'primary'); send.type = 'button'; send.id = 'api-execute';
+    const read = el('button', 'Read status', 'secondary'); read.type = 'button'; read.id = 'api-read-status';
+    const runButtons = el('div', undefined, 'editor-actions'); runButtons.append(send, read); runner.append(runButtons);
+    runner.append(el('p', 'Sends the displayed report to this Homebridge instance using saved credentials. Button and doorbell reports can trigger your Home automations. No request is sent until you click a button.', 'field-help'));
+    const output = el('pre', undefined, 'api-output'); output.id = 'api-output'; output.setAttribute('role', 'status'); output.hidden = true; runner.append(output); container.append(runner);
+    let executing = false, valid = false;
+    async function run(format) {
+      if (executing || !valid) return;
+      const field = options[Number(call.value)];
+      const payload = {family, id: String(device.id), port: String(platform.webhook_port || '51828'), https: platform.https === true,
+        host:host.value, format, field:field.key, buttonName:field.params?.buttonName, value:value.value, fanPower:fan.value, notify:notify.checked};
+      executing = true; send.disabled = true; read.disabled = true;
+      const controls = [host, method, call, value, fan, notify]; controls.forEach(input => {input.disabled = true;});
+      output.hidden = false; output.textContent = 'Sending…'; refreshHeight();
+      try {
+        const result = await homebridge.request('/api/execute', payload);
+        output.textContent = result.error || 'HTTP ' + result.status + '\n\n' + (result.body || '(empty response)');
+      } catch (_) {output.textContent = 'Could not contact the plugin UI server. Close and reopen settings, then check that the child bridge is running.';}
+      finally {executing = false; controls.forEach(input => {input.disabled = false;}); updateButtons(); refreshHeight();}
+    }
+    send.addEventListener('click', () => run(method.value));
+    read.addEventListener('click', () => run('status'));
+    function updateButtons() {
+      const localHost = host.value.trim().replace(/^\[|\]$/g, '');
+      const network = settings.network;
+      const local = network && [...network.addresses, network.hostname, 'localhost', '127.0.0.1', '::1'].includes(localHost);
+      const available = Boolean(local && settings.canExecute && typeof homebridge.request === 'function' && valid);
+      send.disabled = executing || !available || (method.value === 'json' && !platform.state_api_token);
+      read.disabled = executing || !available || !platform.state_api_token;
+      read.hidden = !jsonSupported;
+      send.textContent = ['doorbells','statelessswitches','pushbuttons'].includes(family) ? 'Send event' : 'Send state report';
+      runner.title = !settings.canExecute ? 'Save settings and restart the child bridge before testing changed settings.' : !local ? 'Use this Homebridge instance’s detected IP address for in-page testing.' : '';
+    }
     async function copy(text, button) {
       try {
         if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
@@ -144,18 +185,21 @@
     function example(label, text) {const box = el('section', undefined, 'api-example'); const heading = el('div', undefined, 'button-row-heading'); const button = el('button', 'Copy ' + label.toLowerCase(), 'secondary'); button.type = 'button'; button.addEventListener('click', () => copy(text, button)); heading.append(el('h3', label), button); box.append(heading, el('pre', text)); examples.append(box);}
     function update() {
       examples.replaceChildren(); status.hidden = true;
+      valid = false;
       const field = options[Number(call.value)];
       try {
         if (!value.checkValidity() || value.value === '' || (field.values && !field.values.some(item => item[0] === value.value))) throw Error('Choose a valid value within the accepted range.');
         const json = method.value === 'json';
         if (json && !platform.state_api_token) {status.textContent = 'The JSON State API is disabled. Configure a token in Webhook settings → Incoming State API, save and restart the child bridge. Examples below use a placeholder.'; status.hidden = false;}
         const request = build(platform, device, family, field, value.value, host.value, json, fan.value, notify.checked);
+        valid = true;
         example('URL', request.endpoint); example('curl', request.curl); if (request.body) example('JSON body', request.body);
         if (json) {
           const endpoint = request.endpoint.replace(/\/state$/, '');
           example('Read status', 'curl --request GET' + (platform.http_auth_user && platform.http_auth_pass ? ' --user ' + quote('YOUR_HTTP_USER:YOUR_HTTP_PASSWORD') : '') + ' --header ' + quote('X-Webhooks-Token: YOUR_STATE_API_TOKEN') + ' ' + quote(endpoint));
         }
       } catch (error) {status.textContent = error.message; status.hidden = false;}
+      updateButtons();
       refreshHeight();
     }
     call.addEventListener('change', () => {chooseValue(); update();});
@@ -165,7 +209,7 @@
     response.addEventListener('toggle', refreshHeight); container.append(response);
     chooseValue(); update();
   }
-  const api = {fields, build, origin, render};
+  const api = {fields, build, origin, defaultHost, render};
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.WebhooksApi = api;
 }(typeof window === 'object' ? window : globalThis));
