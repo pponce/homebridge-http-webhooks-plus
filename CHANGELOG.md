@@ -1,3 +1,8 @@
+## 0.6.2
+
+- Give the API reference Field column more room and keep field names on one
+  line. Narrow screens can scroll the table without overflowing the page.
+
 ## 0.6.1
 
 - Add an API calls page beside every configured device. Show device-specific
