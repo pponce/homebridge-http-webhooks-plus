@@ -91,7 +91,7 @@
             "type": {
               "title": "Type",
               "type": "string",
-              "required": false,
+              "required": true,
               "enum": [
                 "contact",
                 "motion",
@@ -2372,5 +2372,6 @@
   },
   "layout": [
     "*"
-  ]
+  ],
+  "customUi": true
 }

@@ -1,3 +1,21 @@
+## 0.6.0
+
+- Replace the flattened 0.5.1 settings form with a custom Homebridge configuration
+  UI inspired by Roborock Matter: cards, teal accents, responsive fields, and
+  Homebridge light/dark theme support.
+- Manage all 15 accessory families with explicit Add, Edit, and Remove actions.
+  Group each device’s commands, state feedback, notifications, and advanced
+  settings. Nested stateless switch buttons are added only on request.
+- Preserve untouched values, unknown options, numeric IDs, legacy state aliases,
+  all configuration blocks, and child-bridge identity. Opening settings does not
+  change configuration; Apply device stages edits and Save settings persists them.
+- Validate IDs, listener settings, state API credentials, request payloads, and
+  limits before saving. Keep edits available after a failed save.
+- Retain the 0.5.1 startup protection against default-only accessory rows and
+  allow an unused State API token to remain configured.
+- Add browser coverage for saving, deletion, empty lists, all device types,
+  responsive layout, and Homebridge theme changes. No new runtime dependencies.
+
 ## 0.5.1
 
 - Stop the settings form from creating default-only accessories in unused device

@@ -49,6 +49,26 @@ Your integration remains responsible for reporting accurate state and controllin
 the hardware. The plugin presents those reports to HomeKit and forwards configured
 actions.
 
+## Configuration UI
+
+Open the plugin’s **Settings** in Homebridge UI. The custom interface uses the
+same plain HTML, JavaScript, CSS, and Homebridge configuration API approach as
+[Roborock Matter](https://github.com/mathiashornbek/homebridge-roborock-matter),
+with cards, teal accents, grouped fields, and Homebridge light/dark themes.
+
+- **Devices:** view configured accessories, add one of the 15 device types, edit
+  its grouped settings, or confirm removal. No devices are created merely by
+  opening or saving the page.
+- **Webhook settings:** configure the listener, optional incoming State API,
+  authentication, HTTPS, logging, and request limits.
+- **Save settings:** device edits are staged with **Apply changes**; this saves
+  all staged changes. Restart the child bridge afterward. The page retains
+  untouched options and child-bridge metadata and reports failed saves without
+  discarding your edits.
+
+The State API token is optional and independent of the device list. A valid
+unused token can stay configured after removing all garages and locks.
+
 ## Garage and lock state controls
 
 These features are per accessory: each garage or lock can have its own state,
@@ -56,8 +76,9 @@ startup and notification policies. They work through both the original webhook
 URLs and the optional v1 JSON API. Configure them separately for each garage or
 lock; other accessory types keep their existing state behavior.
 
-In Homebridge Settings, expand **Webhook Devices**, then **Garage Door Openers**
-or **Lock Mechanisms**, and open the existing device's settings.
+In the plugin’s Homebridge Settings, find the garage or lock under **Devices**
+and choose **Edit**. Open its **State and feedback**, **Notifications**, or
+**Obstruction feedback** settings. Apply your device changes, then save settings.
 
 | Option | Default | Meaning |
 | --- | --- | --- |

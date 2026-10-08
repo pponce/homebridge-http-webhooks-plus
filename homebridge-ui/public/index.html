@@ -1,0 +1,37 @@
+<link rel="stylesheet" href="styles.css">
+<main id="webhooks-app" class="app" aria-busy="true">
+  <header class="app-header">
+    <div class="app-icon" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M16 14h16M16 34h16M12 18v12m24-12v12"/><circle cx="12" cy="12" r="5"/><circle cx="36" cy="12" r="5"/><circle cx="12" cy="36" r="5"/><circle cx="36" cy="36" r="5"/><path d="m20 28 8-8m-8 0h8v8"/></svg>
+    </div>
+    <div><p class="eyebrow">HOMEBRIDGE PLUGIN</p><h1>HTTP Webhooks <span>Plus</span></h1><p class="subtitle">Your HTTP devices, at home.</p></div>
+    <span id="version" class="pill"></span>
+  </header>
+  <p id="page-message" class="notice" role="status" aria-live="polite">Loading your settings…</p>
+  <div id="overview" hidden>
+    <div id="platform-picker" class="panel" hidden></div>
+    <section class="panel" aria-labelledby="devices-heading">
+      <div class="section-heading"><div><div class="title-row"><h2 id="devices-heading">Devices</h2><span id="device-count" class="pill">0</span></div><p>Manage the accessories exposed to Apple Home.</p></div><button id="add-device" type="button" class="primary">+ Add device</button></div>
+      <div id="device-list" class="device-list"></div>
+      <div id="type-picker" class="type-picker" hidden>
+        <h3>What would you like to add?</h3><p class="muted">Choose a device type to configure its webhook settings.</p>
+        <div id="device-types" class="type-grid"></div>
+        <button id="cancel-add" type="button" class="secondary">Cancel</button>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="settings-heading">
+      <div class="section-heading"><div><h2 id="settings-heading">Webhook settings</h2><p>Connection and security settings shared by these devices.</p></div><span class="pill">Platform</span></div>
+      <form id="platform-form" novalidate><div id="platform-fields"></div></form>
+    </section>
+    <footer class="save-bar"><div><strong id="save-status">Settings loaded</strong><p id="save-hint">Changes take effect after restarting the child bridge.</p></div><button id="save-settings" type="button" class="primary" disabled>Save settings</button></footer>
+  </div>
+  <section id="editor" class="panel" hidden aria-labelledby="editor-title">
+    <button id="back-devices" type="button" class="back-button">← Back to devices</button>
+    <div class="section-heading"><div><p id="editor-type" class="eyebrow"></p><h2 id="editor-title" tabindex="-1">Device settings</h2><p>Apply your changes, then save settings.</p></div></div>
+    <p id="editor-message" class="notice error" role="alert" hidden></p>
+    <form id="device-form" novalidate><div id="device-fields"></div><div class="editor-actions"><button id="apply-device" type="submit" class="primary">Apply device</button><button id="cancel-edit" type="button" class="secondary">Cancel</button></div></form>
+  </section>
+  <p class="app-footer">HTTP Webhooks Plus · <a href="https://github.com/pponce/homebridge-http-webhooks-plus#readme" target="_blank" rel="noopener noreferrer">Documentation ↗</a></p>
+</main>
+<script src="model.js"></script>
+<script src="index.js"></script>

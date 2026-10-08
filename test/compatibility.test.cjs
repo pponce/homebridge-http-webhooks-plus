@@ -74,7 +74,7 @@ test('all original registration aliases remain attached to the new package', () 
 
 test('package is independently publishable with only required runtime dependencies', () => {
   assert.equal(pkg.name, 'homebridge-http-webhooks-plus');
-  assert.equal(pkg.version, '0.5.1');
+  assert.equal(pkg.version, '0.6.0');
   assert.equal(pkg.license, 'GPL-3.0');
   assert.equal(pkg.author, 'benzman81');
   assert.deepEqual(pkg.dependencies, {'node-persist':baseline.dependencies['node-persist'], selfsigned:baseline.dependencies.selfsigned});
@@ -82,7 +82,7 @@ test('package is independently publishable with only required runtime dependenci
   assert.equal(pkg.engines.homebridge, baseline.engines.homebridge);
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
   assert.equal(pkg.publishConfig.access, 'public');
-  assert.deepEqual(pkg.files, ['index.js', 'src/', 'config.schema.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'docs/COMPATIBILITY.md', 'docs/STATE_API.md']);
+  assert.deepEqual(pkg.files, ['index.js', 'src/', 'config.schema.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'docs/COMPATIBILITY.md', 'docs/STATE_API.md', 'homebridge-ui/', 'THIRD_PARTY_NOTICES.md']);
   assert.match(pkg.repository.url, /pponce\/homebridge-http-webhooks-plus\.git$/);
 });
 

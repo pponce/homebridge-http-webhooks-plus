@@ -1,6 +1,6 @@
 {
   "name": "homebridge-http-webhooks-plus",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "displayName": "Homebridge HTTP Webhooks Plus",
   "description": "HTTP webhooks and virtual accessories for Homebridge; independently maintained fork of homebridge-http-webhooks.",
   "license": "GPL-3.0",
@@ -42,12 +42,15 @@
     "CHANGELOG.md",
     "LICENSE",
     "docs/COMPATIBILITY.md",
-    "docs/STATE_API.md"
+    "docs/STATE_API.md",
+    "homebridge-ui/",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "scripts": {
     "test": "node --test test/*.test.cjs",
     "prepublishOnly": "npm test && npm run test:hap",
-    "test:hap": "node --test test/hap.integration.cjs"
+    "test:hap": "node --test test/hap.integration.cjs",
+    "test:ui": "node --test test/ui.browser.cjs"
   },
   "publishConfig": {
     "access": "public",
@@ -55,6 +58,7 @@
   },
   "devDependencies": {
     "@homebridge/hap-nodejs": "2.2.2",
-    "hap-nodejs": "0.12.3"
+    "hap-nodejs": "0.12.3",
+    "playwright": "1.58.2"
   }
 }

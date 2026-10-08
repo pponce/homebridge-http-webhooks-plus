@@ -4,10 +4,11 @@ const schema = require('../config.schema.json');
 const props = schema.schema.properties;
 const families = Object.keys(props).filter(key => props[key].items?.properties?.id);
 
-test('optional device lists generate Add templates without inserting an initial accessory', () => {
+test('custom UI retains a safe zero-row schema fallback', () => {
   assert.equal(families.length, 15);
   // An explicit layout item is counted as a real row by ng-formworks, even if
   // listItems is zero. Schema-generated templates remain in the Add library.
+  assert.equal(schema.customUi, true);
   assert.deepEqual(schema.layout, ['*']);
   for (const family of families) {
     assert.equal(props[family].minItems, 0, family);

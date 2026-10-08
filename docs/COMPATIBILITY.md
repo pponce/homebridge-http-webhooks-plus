@@ -2,7 +2,7 @@
 
 This guide covers moving from `homebridge-http-webhooks` to
 `homebridge-http-webhooks-plus`, and updating an existing Plus installation.
-It describes compatibility with Plus 0.5.0. See the [changelog](../CHANGELOG.md)
+It describes compatibility with Plus 0.6.0. See the [changelog](../CHANGELOG.md)
 for individual releases and the [README](../README.md) for configuration examples.
 
 ## What stays the same
@@ -87,11 +87,20 @@ TLS certificate verification is enabled by default. The existing
 
 ### Configuration and state validation
 
-Version 0.5.1 fixes unused device lists being saved as default-only accessory
-rows. Empty lists stay empty until you use Add. Device settings now use the
-schema-generated form, with global settings first and a collapsible list for
-each device family. All accessory fields remain available; the legacy
-`external_state` alias remains a JSON option instead of a second state-mode control.
+Version 0.6.0 replaces the flattened 0.5.1 form with a custom configuration UI.
+Use **Devices → Add device** to create an accessory, or **Edit** beside an
+existing device. Commands, feedback, notifications, and advanced settings are
+grouped per device. **Apply changes** stages a device edit; **Save settings**
+writes the complete configuration through Homebridge UI. Restart the child
+bridge after saving. The host’s generic Save button is disabled so it cannot
+bypass this page’s validation.
+
+Empty lists stay empty until you explicitly add a device or stateless switch
+button. Untouched values and unknown options are retained, including other
+configuration blocks and `_bridge` metadata. All schema settings remain
+available. The legacy `external_state` alias is reflected in State source;
+changing that selection keeps an existing alias consistent. No accessory IDs,
+cache files, bridge identities, or pairing data are migrated.
 
 Existing rows containing only form defaults and no ID are ignored at startup
 with a warning identifying the array and zero-based row index. You can remove
